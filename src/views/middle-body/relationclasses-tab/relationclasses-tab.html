@@ -1,0 +1,12 @@
+<template>
+    <require from="../../parent-child-select/parent-child-select"></require>
+
+    <div class="relationclasses-tab">
+        <parent-child-select
+                items.bind="selectedObjectService.selectedObject.relationclasses"
+                objecttypetoadd.bind="'RelationClass'"
+                sortable.bind="'true'"
+        >
+        </parent-child-select>
+    </div>
+</template>

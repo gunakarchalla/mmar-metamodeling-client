@@ -1,0 +1,9 @@
+<template>
+    <require from="../../parent-child-select/parent-child-select"></require>
+    <parent-child-select
+            items.bind="selectedObjectService.selectedObject.has_user_group"
+            objecttypetoadd.bind="'UserGroup'"
+            sortable.bind="'true'"
+    >
+    </parent-child-select>
+</template>

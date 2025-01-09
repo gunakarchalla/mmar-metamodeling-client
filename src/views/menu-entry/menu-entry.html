@@ -1,0 +1,33 @@
+<template>
+  <div mdc-menu-surface-anchor ref="menuElementAnchor">
+    <button
+      click.trigger="menuButtonClicked(menuElement)"
+      mdc-button
+    >
+      <mdc-icon>${menuEntry.icon}</mdc-icon>${menuEntry.name}
+    </button>
+    <mdc-menu
+      anchor-corner.bind="anchorCorner"
+      anchor-margin.bind="anchorMargin"
+      anchor.bind="menuElementAnchor"
+      default-focus-state.bind="defaultFocusState"
+      fixed.bind="fixed"
+      mdcmenu:selected.trigger="onMenuSelect($event.detail)"
+      quick-open.bind="quickOpen"
+      stay-open-on-selection.bind="stayOpenOnSelection"
+      view-model.ref="menuElement"
+    >
+      <mdc-list tabindex="-1" wrap-focus.bind="wrapFocus">
+        <template repeat.for="item of menuEntry.items ">
+          <mdc-list-item
+            disabled.bind="item.disabled"
+            if.bind="item.label"
+            value.bind="item.label"
+            >${item.label}</mdc-list-item
+          >
+          <mdc-list-divider else></mdc-list-divider>
+        </template>
+      </mdc-list>
+    </mdc-menu>
+  </div>
+</template>

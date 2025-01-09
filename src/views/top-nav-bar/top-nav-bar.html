@@ -1,0 +1,28 @@
+<template>
+    <import from="../menu-entry/menu-entry"></import>
+
+    <mdc-top-app-bar class="mdc-top-app-bar">
+        <mdc-top-app-bar-row>
+            <mdc-top-app-bar-section start>
+                <mdc-top-app-bar-title>MMAR Metamodeling Client</mdc-top-app-bar-title>
+            </mdc-top-app-bar-section>
+
+            <mdc-top-app-bar-section center>
+                <menu-entry menu-entry.bind="fileMenu"></menu-entry>
+                <menu-entry menu-entry.bind="viewMenu"></menu-entry>
+                <menu-entry menu-entry.bind="editMenu"></menu-entry>
+                <menu-entry menu-entry.bind="diagramMenu"></menu-entry>
+                <menu-entry menu-entry.bind="settingsMenu"></menu-entry>
+            </mdc-top-app-bar-section>
+
+            <mdc-top-app-bar-section end>
+                <img
+                        alt="UnifrLogo"
+                        class="unifr-logo"
+                        id="img"
+                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Universit%C3%A4t_Freiburg_%28Schweiz%29_logo_small.svg/220px-Universit%C3%A4t_Freiburg_%28Schweiz%29_logo_small.svg.png"
+                />
+            </mdc-top-app-bar-section>
+        </mdc-top-app-bar-row>
+    </mdc-top-app-bar>
+</template>

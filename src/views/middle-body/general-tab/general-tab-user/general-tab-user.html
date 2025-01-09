@@ -1,0 +1,17 @@
+<template>
+    <section aria-label="Input Form" class="input-group-attribute">
+        <fieldset class="border p-2">
+            <legend class="float-none w-auto p-2 col-form-label">User</legend>
+            <div class="form-floating mb-3">
+                <input
+                        class="form-control"
+                        id="userUsernameInput"
+                        placeholder="Username"
+                        type="text"
+                        value.bind="selectedObjectService.selectedObject.username"
+                >
+                <label for="userUsernameInput">Username</label>
+            </div>
+        </fieldset>
+    </section>
+</template>

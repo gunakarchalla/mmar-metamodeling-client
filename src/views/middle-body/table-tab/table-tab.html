@@ -1,0 +1,8 @@
+<template>
+    <require from="../../parent-child-select/parent-child-select"></require>
+    <parent-child-select
+            items.bind="selectedObjectService.selectedObject.has_table_attribute"
+            objecttypetoadd.bind="'Column'"
+            sortable.bind="false">
+    </parent-child-select>
+</template>

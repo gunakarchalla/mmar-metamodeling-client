@@ -1,0 +1,14 @@
+<template>
+    <require from="../../parent-child-select/parent-child-select"></require>
+    <parent-child-select
+            items.bind="selectedObjectService.selectedObject.role_from"
+            objecttypetoadd.bind="'Source'"
+            sortable.bind="'true'"
+    >
+    </parent-child-select>
+    <parent-child-select
+            items.bind="selectedObjectService.selectedObject.role_to"
+            objecttypetoadd.bind="'Destination'"
+            sortable.bind="'true'"
+    ></parent-child-select>
+</template>

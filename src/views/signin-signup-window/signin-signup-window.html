@@ -1,0 +1,22 @@
+<template>
+    <button click.trigger="dialog.open()" if.bind="mode === 'Sign In'" mdc-button outlined>
+        ${mode}
+    </button>
+    <button click.trigger="action()" if.bind="mode === 'Sign Out'" mdc-button outlined>${mode}</button>
+    <mdc-dialog class="mdc-dialog-signinup" view-model.ref="dialog">
+        <mdc-dialog-title> ${mode}</mdc-dialog-title>
+        <mdc-dialog-content class="mdc-dialog-content-signinup">
+            <mdc-text-field label="Username" outlined value.bind="username"></mdc-text-field>
+            <mdc-text-field label="Password" outlined type="password" value.bind="password"></mdc-text-field>
+        </mdc-dialog-content>
+        <mdc-dialog-actions class="mdc-dialog-actions-signinup">
+            <button click.trigger="signUp()" mdc-button outlined>Sign Up</button>
+            <button click.trigger="action()" data-mdc-dialog-button-default mdc-button outlined>
+                ${mode}
+            </button>
+            <button data-mdc-dialog-action="cancel" mdc-button outlined>
+                Cancel
+            </button>
+        </mdc-dialog-actions>
+    </mdc-dialog>
+</template>

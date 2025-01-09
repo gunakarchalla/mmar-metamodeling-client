@@ -1,0 +1,87 @@
+<template>
+    <button click.trigger="dialog.open()" mdc-button outlined>
+        <mdc-icon> add</mdc-icon>
+        Add New ${titleType}
+    </button>
+    <mdc-dialog class="mdc-dialog-object-select" mdcdialog:closing.trigger="handleClosing($event)"
+                mdcdialog:opening.trigger="handleOpening($event)" view-model.ref="dialog">
+        <mdc-dialog-title> Add new ${titleType}</mdc-dialog-title>
+        <mdc-dialog-content class="mdc-dialog-content-object-select">
+            <!-- search bar -->
+
+            <div class="search-bar-modal">
+                <mdc-text-field input.trigger="filterItems()" label="search" maxlength="256" outlined
+                                value.bind="searchTerm">
+                    <mdc-icon class="material-icons" leading mdc-text-field-icon>search</mdc-icon>
+                </mdc-text-field>
+            </div>
+
+            <hr class="solid"/>
+
+            <mdc-data-table class="mdc-data-table-object-select">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th click.trigger="sortList('type')"
+                            if.bind="objecttype==='Source' || objecttype==='Destination' || objecttype==='Role'">
+                            Type
+                            <span if.bind="currentSort.column === 'type' && currentSort.direction === 'asc'">
+                                    <mdc-icon> arrow_upward </mdc-icon>
+                                </span>
+                            <span if.bind="currentSort.column === 'type' && currentSort.direction === 'desc'">
+                                    <mdc-icon> arrow_downward </mdc-icon>
+                                </span>
+                        </th>
+                        <th click.trigger="sortList('name')">
+                            Name
+                            <span if.bind="currentSort.column === 'name' && currentSort.direction === 'asc'">
+                                    <mdc-icon> arrow_upward </mdc-icon>
+                                </span>
+                            <span if.bind="currentSort.column === 'name' && currentSort.direction === 'desc'">
+                                    <mdc-icon> arrow_downward </mdc-icon>
+                                </span>
+                        </th>
+                        <th click.trigger="sortList('description')">
+                            Description
+                            <span if.bind="currentSort.column === 'description' && currentSort.direction === 'asc'">
+                                    <mdc-icon> arrow_upward </mdc-icon>
+                                </span>
+                            <span if.bind="currentSort.column === 'description' && currentSort.direction === 'desc'">
+                                    <mdc-icon> arrow_downward </mdc-icon>
+                                </span>
+                        </th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    <tr click.trigger="selectObject(item.uuid)" id="${item.uuid}_${objecttype}"
+                        repeat.for="item of filteredItems">
+                        <td>
+                            <img alt="image of ${item.name}" class="image-list"
+                                 src.bind="selectedObjectService.getIcon(item.geometry.toString())"/>
+                        </td>
+                        <td>${selectedObjectService.getTypeFromUuid(item.uuid)}</td>
+                        <td>${item.name}</td>
+                        <td>${item.description}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </mdc-data-table>
+        </mdc-dialog-content>
+        <mdc-dialog-actions class="mdc-dialog-actions-object-select" data-mdc-dialog-action="accept">
+            <button data-mdc-dialog-action="ok" data-mdc-dialog-button-default
+                    disabled.bind="selecteditems.length<1"
+                    mdc-button
+                    outlined>
+                <mdc-icon> add</mdc-icon>
+
+                Add
+                ${titleType}${selecteditems.length > 1 && objecttype !== "Class" && objecttype !== "RelationClass" ? 's' : ''}
+            </button>
+            <button data-mdc-dialog-action="cancel" mdc-button outlined>
+                Cancel
+            </button>
+        </mdc-dialog-actions>
+    </mdc-dialog>
+</template>

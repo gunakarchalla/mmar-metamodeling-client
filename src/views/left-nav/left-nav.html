@@ -1,0 +1,82 @@
+<import from="../object-list/object-list"></import>
+<template>
+    <mdc-expandable accordion>
+        <div au-slot="caption">Scene types</div>
+        <mdc-linear-progress open.bind="isLoadingSceneTypes"></mdc-linear-progress>
+        <object-list
+                if.bind="!isLoadingSceneTypes"
+                object-list.bind="selectedObjectService.sceneTypes"
+                type="SceneType"
+        ></object-list>
+    </mdc-expandable>
+
+    <mdc-expandable accordion>
+        <div au-slot="caption">Classes</div>
+        <mdc-linear-progress open.bind="isLoadingClasses"></mdc-linear-progress>
+        <object-list
+                if.bind="!isLoadingClasses"
+                object-list.bind="selectedObjectService.classes"
+                type="Class"
+        ></object-list>
+    </mdc-expandable>
+
+    <mdc-expandable accordion>
+        <div au-slot="caption">Relation classes</div>
+        <mdc-linear-progress
+                open.bind="isLoadingRelationClasses"
+        ></mdc-linear-progress>
+        <object-list
+                if.bind="!isLoadingRelationClasses"
+                object-list.bind="selectedObjectService.relationClasses"
+                type="RelationClass"
+        ></object-list>
+    </mdc-expandable>
+
+    <mdc-expandable accordion>
+        <div au-slot="caption">Attributes</div>
+        <mdc-linear-progress open.bind="isLoadingAttributes"></mdc-linear-progress>
+        <object-list
+                if.bind="!isLoadingAttributes"
+                object-list.bind="selectedObjectService.attributes"
+                type="Attribute"
+        ></object-list>
+    </mdc-expandable>
+    <mdc-expandable accordion>
+        <div au-slot="caption">Attribute types</div>
+        <mdc-linear-progress
+                open.bind="isLoadingAttributeTypes"
+        ></mdc-linear-progress>
+        <object-list
+                if.bind="!isLoadingAttributeTypes"
+                object-list.bind="selectedObjectService.attributeTypes"
+                type="AttributeType"
+        ></object-list>
+    </mdc-expandable>
+    <mdc-expandable accordion>
+        <div au-slot="caption">Ports</div>
+        <mdc-linear-progress open.bind="isLoadingPorts"></mdc-linear-progress>
+        <object-list
+                if.bind="!isLoadingPorts"
+                object-list.bind="selectedObjectService.ports"
+                type="Port"
+        ></object-list>
+    </mdc-expandable>
+    <mdc-expandable accordion if.bind="isAdmin">
+        <div au-slot="caption">Users</div>
+        <mdc-linear-progress open.bind="isLoadingUsers"></mdc-linear-progress>
+        <object-list
+                if.bind="!isLoadingUsers"
+                object-list.bind="selectedObjectService.users"
+                type="User"
+        ></object-list>
+    </mdc-expandable>
+    <mdc-expandable accordion if.bind="isAdmin">
+        <div au-slot="caption">Usergroups</div>
+        <mdc-linear-progress open.bind="isLoadingUsergroups"></mdc-linear-progress>
+        <object-list
+                if.bind="!isLoadingUsergroups"
+                object-list.bind="selectedObjectService.userGroups"
+                type="UserGroup"
+        ></object-list>
+    </mdc-expandable>
+</template>

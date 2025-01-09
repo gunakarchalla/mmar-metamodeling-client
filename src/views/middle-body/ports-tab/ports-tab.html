@@ -1,0 +1,11 @@
+
+<template>
+    <require from="../../parent-child-select/parent-child-select"></require>
+
+    <parent-child-select
+      objecttypetoadd.bind="'Port'"
+      sortable.bind="'true'"
+      items.bind="selectedObjectService.selectedObject.ports"
+    >
+    </parent-child-select>
+</template>

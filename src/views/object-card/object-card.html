@@ -1,0 +1,18 @@
+<template>
+    <mdc-card
+            class="object-card"
+            click.trigger="onButtonClicked(object)"
+            id="${object.uuid}"
+            name="${object.name}"
+    >
+        <mdc-card-primary-action
+                class="object-card__primary-action ${isSelected ? 'selected' : ''}"
+                mdc-tooltip="value.bind: object.description ? object.description : object.name">
+            <mdc-image-list-item
+                    class="mdc-image-list__item"
+                    src.bind="selectedObjectService.getIcon(object.geometry.toString())"
+            ></mdc-image-list-item>
+            <div class="object-card__primary-action__name">${object.name}</div>
+        </mdc-card-primary-action>
+    </mdc-card>
+</template>

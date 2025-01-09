@@ -1,0 +1,78 @@
+<template>
+    <section aria-label="Input Form" class="input-group-attribute">
+        <fieldset class="border p-2">
+            <legend class="float-none w-auto p-2 col-form-label">User group</legend>
+            <div class="form-check form-switch">
+                <input checked.bind="selectedObjectService.selectedObject.can_create_scenetype"
+                       class="form-check-input"
+                       id="canCreateScenetype" name="canCreateScenetype" role="switch"
+                       type="checkbox">
+                <label class="form-check-label" for="canCreateScenetype">
+                    can create scenetypes
+                </label>
+            </div>
+
+            <div class="form-check form-switch">
+                <input checked.bind="selectedObjectService.selectedObject.can_create_attribute"
+                       class="form-check-input"
+                       id="canCreateAttribute" name="canCreateAttribute" role="switch"
+                       type="checkbox">
+                <label class="form-check-label" for="canCreateAttribute">
+                    can create attributes
+                </label>
+            </div>
+
+            <div class="form-check form-switch">
+                <input checked.bind="selectedObjectService.selectedObject.can_create_attribute_type"
+                       class="form-check-input"
+                       id="canCreateAttributeType" name="canCreateAttributeType" role="switch"
+                       type="checkbox">
+                <label class="form-check-label" for="canCreateAttributeType">
+                    can create attribute type
+                </label>
+            </div>
+
+            <div class="form-check form-switch">
+                <input checked.bind="selectedObjectService.selectedObject.can_create_class"
+                       class="form-check-input"
+                       id="canCreateClass" name="canCreateClass" role="switch"
+                       type="checkbox">
+                <label class="form-check-label" for="canCreateClass">
+                    can create class
+                </label>
+            </div>
+
+            <div class="form-check form-switch">
+                <input checked.bind="selectedObjectService.selectedObject.can_create_relationclass"
+                       class="form-check-input"
+                       id="canCreateRelationClass" name="canCreateRelationClass" role="switch"
+                       type="checkbox">
+                <label class="form-check-label" for="canCreateRelationClass">
+                    can create relationclass
+                </label>
+            </div>
+
+            <div class="form-check form-switch">
+                <input checked.bind="selectedObjectService.selectedObject.can_create_port"
+                       class="form-check-input"
+                       id="canCreatePort" name="canCreatePort" role="switch"
+                       type="checkbox">
+                <label class="form-check-label" for="canCreatePort">
+                    can create port
+                </label>
+            </div>
+
+            <div class="form-check form-switch">
+                <input checked.bind="selectedObjectService.selectedObject.can_create_role"
+                       class="form-check-input"
+                       id="canCreateRole" name="canCreateRole" role="switch"
+                       type="checkbox">
+                <label class="form-check-label" for="canCreateRole">
+                    can create role
+                </label>
+            </div>
+
+
+        </fieldset>
+    </section>
+</template>

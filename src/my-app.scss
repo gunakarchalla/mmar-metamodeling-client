@@ -1,0 +1,15 @@
+@use '@material/theme' with (
+  $primary: #000000,
+  $secondary: #03dac6,
+  $error: #b00020,
+  $on-primary: #fff,
+  $on-secondary: #000,
+  $on-error: #fff,
+);
+
+// all styles
+@use "@aurelia-mdc-web/all";
+@import "bootstrap/scss/bootstrap";
+
+@import "./styles/mdc";
+

@@ -1,0 +1,172 @@
+<template>
+    <require from="../modal-object-select/modal-object-select"></require>
+    <section aria-label="Input Form" class="input-group-parent-child">
+        <fieldset class="border p-2">
+            <legend class="float-none w-auto p-2 col-form-label">${titleType}s</legend>
+
+            <div class="top-options">
+                <!-- search bar -->
+                <mdc-text-field
+                        class="search-bar"
+                        input.trigger="filterItems()"
+                        label="search"
+                        maxlength="256"
+                        outlined
+                        value.bind="searchTerm"
+                >
+                    <mdc-icon class="material-icons" leading mdc-text-field-icon
+                    >search
+                    </mdc-icon>
+                </mdc-text-field>
+
+                <modal-object-select
+                        closing.bind="handleModalClose"
+                        ismultiselect="true"
+                        objecttype.bind="objecttypetoadd"
+                ></modal-object-select>
+
+                <!-- button remove -->
+                <button
+                        click.trigger="removeSelectedObject()"
+                        disabled.bind="selected === null"
+                        mdc-button
+                        outlined
+                >
+                    <mdc-icon> remove</mdc-icon>
+                    Remove selected
+                </button>
+
+                <!-- edit selected -->
+                <button
+                        click.trigger="editObject()"
+                        disabled.bind="selected === null"
+                        mdc-button
+                        outlined
+                >
+                    <mdc-icon> edit</mdc-icon>
+                    Edit selected
+                </button>
+            </div>
+            <hr class="solid"/>
+            <mdc-data-table
+                    class="mdc-data-table-child-parent"
+            >
+                <table>
+                    <thead>
+                    <tr>
+                        <th if.bind="!sortable"></th>
+                        <th>Image</th>
+                        <th click.trigger="sortList('type')"
+                            if.bind="objecttypetoadd=='Source' || objecttypetoadd==='Destination' || objecttypetoadd==='Role'">
+                            Type
+                            <span if.bind="sortable && currentSort.column === 'type' && currentSort.direction === 'asc'">
+                  <mdc-icon> arrow_upward </mdc-icon>
+                </span>
+                            <span if.bind="sortable && currentSort.column === 'type' && currentSort.direction === 'desc'">
+                  <mdc-icon> arrow_downward </mdc-icon>
+                </span>
+                        </th>
+                        <th click.trigger="sortList('name')">
+                            Name
+                            <span if.bind="sortable && currentSort.column === 'name' && currentSort.direction === 'asc'">
+                                <mdc-icon> arrow_upward </mdc-icon>
+                </span>
+                            <span if.bind="sortable && currentSort.column === 'name' && currentSort.direction === 'desc'">
+                                <mdc-icon> arrow_downward </mdc-icon>
+                </span>
+                        </th>
+                        <th click.trigger="sortList('description')">
+                            Description
+                            <span if.bind="sortable && currentSort.column === 'description' && currentSort.direction === 'asc'">
+                  <mdc-icon> arrow_upward </mdc-icon>
+                </span>
+                            <span if.bind="sortable && currentSort.column === 'description' && currentSort.direction === 'desc'">
+                  <mdc-icon> arrow_downward </mdc-icon>
+                </span>
+                        </th>
+                        <th if.bind="objecttypetoadd == 'Attribute'">UI Component</th>
+                        <th if.bind="objecttypetoadd=='Source' || objecttypetoadd==='Destination' || objecttypetoadd==='Role'"
+                            numeric>
+                            Min
+                        </th>
+                        <th if.bind="objecttypetoadd=='Source' || objecttypetoadd==='Destination' || objecttypetoadd==='Role'"
+                            numeric>
+                            Max
+                        </th>
+                        <th></th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    <tr
+                            class.bind="item.uuid === selected ? 'selected' : ''"
+                            click.trigger="selectObject(item.uuid)"
+                            mdc-data-table-row
+                            repeat.for="item of filteredItems"
+                    >
+                        <td class="action-buttons" if.bind="!sortable">
+                            <div class="move-buttons" show.bind="item.uuid === selected">
+                                <button click.trigger="moveRow(item.uuid, 'up')" mdc-button>
+                                    <mdc-icon> arrow_upward</mdc-icon>
+                                </button>
+                                <button click.trigger="moveRow(item.uuid, 'down')" mdc-button>
+                                    <mdc-icon> arrow_downward</mdc-icon>
+                                </button>
+                            </div>
+                        </td>
+
+                        <td>
+                            <img
+                                    alt="image of ${item.name}"
+                                    class="image-list"
+                                    src.bind="selectedObjectService.getIcon(item.geometry.toString())"
+                            />
+                        </td>
+                        <td if.bind="objecttypetoadd=='Source' || objecttypetoadd==='Destination' || objecttypetoadd==='Role'"
+                        >
+                            ${selectedObjectService.getTypeFromUuid(item.uuid)}
+                        </td>
+                        <td>${item.name}</td>
+                        <td>${item.description}</td>
+                        <td if.bind="objecttypetoadd==='Source' || objecttypetoadd==='Destination' || objecttypetoadd==='Role'">
+                            <mdc-text-field
+                                    change.trigger="validateMinMax(item.uuid, item.min, item.max)"
+                                    label="Min"
+                                    min="0"
+                                    outlined
+                                    step="1"
+                                    type="number"
+                                    value.bind="item.min"
+                            ></mdc-text-field>
+                        </td>
+                        <td if.bind="objecttypetoadd==='Source' || objecttypetoadd==='Destination' || objecttypetoadd==='Role'">
+                            <mdc-text-field
+                                    change.trigger="validateMinMax(item.uuid, item.min, item.max)"
+                                    label="Max"
+                                    min="item.min"
+                                    outlined
+                                    step="1"
+                                    type="number"
+                                    value.bind="item.max"
+                            ></mdc-text-field>
+                        </td>
+                        <td if.bind="objecttypetoadd==='Attribute'">
+                            <mdc-text-field
+                                    label="UI Component"
+                                    outlined
+                                    value.bind="item.ui_component"
+                            ></mdc-text-field>
+                        </td>
+
+                        <td>
+                            <button click.trigger="removeObject(item.uuid)" mdc-button>
+                                <mdc-icon> delete</mdc-icon>
+                            </button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </mdc-data-table>
+        </fieldset>
+    </section>
+</template>

@@ -1,0 +1,17 @@
+<template>
+    <section aria-label="Input Form" class="input-group-attr-type">
+        <fieldset class="border p-2">
+            <legend class="float-none w-auto p-2 col-form-label">Attribute type</legend>
+
+            <div class="form-floating">
+                <input class="form-control"
+                       id="regExField" placeholder="RegEx"
+                       type="text"
+                       value.bind="selectedObjectService.selectedObject.regex_value"
+                >
+                <label for="regExField">RegEx</label>
+            </div>
+
+        </fieldset>
+    </section>
+</template>

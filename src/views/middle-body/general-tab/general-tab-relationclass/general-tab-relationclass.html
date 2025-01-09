@@ -1,0 +1,49 @@
+<template>
+    <import from="../../../object-card/object-card"></import>
+    <require from="../../../modal-object-select/modal-object-select"></require>
+
+    <section aria-label="Input Form" class="input-group-attribute">
+        <fieldset class="border p-2">
+            <legend class="float-none w-auto p-2 col-form-label">Relationclass</legend>
+            <div class="attr-attribute-type">
+
+                <label>Bendpoint: </label>
+                <mdc-card
+                        class="object-card"
+                        if.bind="selectedObjectService.getObjectFromUuid(selectedObjectService.selectedObject.bendpoint)"
+                >
+                    <mdc-card-primary-action
+                            class="object-card__primary-action"
+                            mdc-tooltip="value.bind: selectedObjectService.getObjectFromUuid(selectedObjectService.selectedObject.bendpoint).name"
+                    >
+                        <mdc-image-list-item
+                                class="mdc-image-list__item"
+                                src.bind="getImage()"
+                        ></mdc-image-list-item>
+                        <div class="object-card__primary-action__name">
+                            ${selectedObjectService.getObjectFromUuid(selectedObjectService.selectedObject.bendpoint).name}
+                        </div>
+                    </mdc-card-primary-action>
+                </mdc-card>
+
+                <div class="general-tab-stack">
+                    <button
+                            click.trigger="removeBendpoint()"
+                            disabled.bind="!selectedObjectService.selectedObject.bendpoint" mdc-button
+                            outlined
+                    >
+                        <mdc-icon> remove</mdc-icon>
+                        Remove Bendpoint
+                    </button>
+
+                    <modal-object-select
+                            class="login-button"
+                            ismultiselect="false"
+                            objecttype.bind="'Bendpoint'"
+                    ></modal-object-select>
+                </div>
+
+            </div>
+        </fieldset>
+    </section>
+</template>

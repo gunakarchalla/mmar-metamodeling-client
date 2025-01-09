@@ -1,0 +1,38 @@
+<template>
+    <import from="../object-card/object-card"></import>
+
+    <mdc-text-field
+            class="search-left-nav"
+            disabled.bind="!(userService.isAuthenticated())"
+            input.trigger="filterItems()"
+            label="search"
+            outlined
+            value.bind="searchTerm"
+    >
+        <mdc-icon class="material-icons" leading mdc-text-field-icon
+        >search
+        </mdc-icon>
+    </mdc-text-field>
+    <button click.trigger="addNewObject()" disabled.bind="!(userService.isAuthenticated())" mdc-button outlined>
+        <mdc-icon> add</mdc-icon>
+        Add new
+    </button>
+    <button
+            click.trigger="removeObject()"
+            disabled.bind="!selectedobject"
+            mdc-button
+            outlined
+    >
+        <mdc-icon> delete</mdc-icon>
+        Remove selected
+    </button>
+    <hr class="solid_hr_list"/>
+    <mdc-image-list class="object-card-list standard-image-list image-list--rounded-corners">
+        <object-card
+                class="object-card"
+                object.bind="object"
+                repeat.for="object of filteredItems"
+                type.bind="type"
+        ></object-card>
+    </mdc-image-list>
+</template>

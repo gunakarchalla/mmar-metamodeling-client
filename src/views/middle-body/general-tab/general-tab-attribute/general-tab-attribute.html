@@ -1,0 +1,108 @@
+<template>
+    <import from="../../../object-card/object-card"></import>
+    <require from="../../../modal-object-select/modal-object-select"></require>
+
+    <section aria-label="Input Form" class="input-group-attribute">
+        <fieldset class="border p-2">
+            <legend class="float-none w-auto p-2 col-form-label">Attribute</legend>
+            <div class="attr-attribute-type">
+                <label>Attribute Type: </label>
+                <mdc-card
+                        class="object-card"
+                        if.bind="selectedObjectService.selectedObject.attribute_type_uuid"
+                >
+                    <mdc-card-primary-action
+                            class="object-card__primary-action"
+                            mdc-tooltip="value.bind: selectedObjectService.selectedObject.attribute_type.name"
+                    >
+                        <mdc-image-list-item
+                                class="mdc-image-list__item"
+                                src.bind="getImage()"
+                        ></mdc-image-list-item>
+                        <div class="object-card__primary-action__name">
+                            ${selectedObjectService.selectedObject.attribute_type.name}
+                        </div>
+                    </mdc-card-primary-action>
+                </mdc-card>
+
+                <modal-object-select
+                        class="login-button"
+                        ismultiselect="false"
+                        items-selected.trigger="handleItemsSelected($event)"
+                        objecttype.bind="'Attribute Type'"
+                ></modal-object-select>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <input
+                                class="form-control"
+                                id="attrMinInput"
+                                placeholder="Minimum"
+                                type="number"
+                                value.bind="selectedObjectService.selectedObject.min"
+                        >
+                        <label for="attrMinInput">Minimum</label>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <input
+                                class="form-control"
+                                id="attrMaxInput"
+                                placeholder="Maximum"
+                                type="number"
+                                value.bind="selectedObjectService.selectedObject.max"
+                        >
+                        <label for="attrMaxInput">Maximum</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input
+                        blur.trigger="populateFacetList()"
+                        class="form-control"
+                        id="facetInput"
+                        input.trigger="populateFacetList()"
+                        placeholder="Facets"
+                        type="text"
+                        value.bind="selectedObjectService.selectedObject.facets"
+                >
+                <label for="defaultValueInput">Facets</label>
+                <div class="invalid-feedback">
+                    The facets must be separated by a | character.
+                </div>
+            </div>
+
+
+            <div class="form-floating mb-3" if.bind="facetsList.length===0">
+                <input
+                        blur.trigger="validateDefaultValue($event)"
+                        class="form-control"
+                        id="defaultValueInput"
+                        input.trigger="validateDefaultValue($event)"
+                        placeholder="Default Value"
+                        type="text"
+                        value.bind="selectedObjectService.selectedObject.default_value"
+                >
+                <label for="defaultValueInput">Default value</label>
+                <div class="invalid-feedback">
+                    The default value must match the regular expression of the attribute type.
+                </div>
+            </div>
+            <div class="form-floating mb-3" if.bind="facetsList.length!==0">
+                <select
+                        class="form-select"
+                        id="defaultValueSelect"
+                        value.bind="selectedObjectService.selectedObject.default_value"
+                >
+                    <option value="">Select a default value</option>
+                    <option model.bind="facet" repeat.for="facet of facetsList">${facet}</option>
+                </select>
+                <label for="defaultValueSelect">Default value</label>
+            </div>
+        </fieldset>
+    </section>
+</template>

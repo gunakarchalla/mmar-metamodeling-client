@@ -1,0 +1,18 @@
+<template>
+    <section>
+        <fieldset class="border p-2">
+            <legend class="float-none w-auto p-2 col-form-label">Class</legend>
+            <div class="form-check form-switch  form-check-inline">
+                <input checked.bind="selectedObjectService.selectedObject.is_reusable" class="form-check-input"
+                       id="flexSwitchCheckResuable" role="switch" type="checkbox">
+                <label class="form-check-label" for="flexSwitchCheckResuable">Reusable</label>
+            </div>
+
+            <div class="form-check form-switch  form-check-inline">
+                <input checked.bind="selectedObjectService.selectedObject.is_abstract" class="form-check-input"
+                       id="flexSwitchCheckAbstract" role="switch" type="checkbox">
+                <label class="form-check-label" for="flexSwitchCheckAbstract">Abstract</label>
+            </div>
+        </fieldset>
+    </section>
+</template>

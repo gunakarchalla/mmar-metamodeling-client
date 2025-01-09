@@ -1,0 +1,47 @@
+<template>
+    <import from="./attributes-tab/attributes-tab"></import>
+    <import from="./general-tab/general-tab"></import>
+    <import from="./attributes-tab/attributes-tab"></import>
+    <import from="./relations-tab/relations-tab"></import>
+    <import from="./ports-tab/ports-tab"></import>
+    <import from="./classes-tab/classes-tab"></import>
+    <import from="./relationclasses-tab/relationclasses-tab"></import>
+    <import from="./reference-tab/reference-tab"></import>
+    <import from="./table-tab/table-tab"></import>
+    <import from="./read-right-tab/read-right-tab"></import>
+    <import from="./write-right-tab/write-right-tab"></import>
+    <import from="./delete-right-tab/delete-right-tab"></import>
+    <import from="./can-create-instance-tab/can-create-instance-tab"></import>
+    <import from="./usergroup-tab/usergroup-tab"></import>
+
+    <div if.bind="selectedObjectService.selectedObject">
+        <mdc-tab-bar class="tab-bar">
+            <mdc-tab
+                    active.bind="selectedObjectService.selectedTab === tab.label"
+                    class="tab"
+                    click.trigger="clickedTab(tab.label)"
+                    label.bind="tab.label"
+                    repeat.for="tab of visibleTabs">
+            </mdc-tab>
+        </mdc-tab-bar>
+
+        <!-- The tab content do not use template with switch-->
+        <div class="tab-content">
+            <general-tab if.bind="selectedObjectService.selectedTab === 'General'"></general-tab>
+            <attributes-tab if.bind="selectedObjectService.selectedTab === 'Attributes'"></attributes-tab>
+            <classes-tab if.bind="selectedObjectService.selectedTab === 'Classes'"></classes-tab>
+            <relationclasses-tab
+                    if.bind="selectedObjectService.selectedTab === 'RelationClasses'"></relationclasses-tab>
+            <relations-tab if.bind="selectedObjectService.selectedTab === 'Relations'"></relations-tab>
+            <ports-tab if.bind="selectedObjectService.selectedTab === 'Ports'"></ports-tab>
+            <reference-tab if.bind="selectedObjectService.selectedTab === 'Reference'"></reference-tab>
+            <table-tab if.bind="selectedObjectService.selectedTab === 'Table'"></table-tab>
+            <usergroup-tab if.bind="selectedObjectService.selectedTab === 'User Groups'"></usergroup-tab>
+            <read-right-tab if.bind="selectedObjectService.selectedTab === 'Read Right'"></read-right-tab>
+            <write-right-tab if.bind="selectedObjectService.selectedTab === 'Write Right'"></write-right-tab>
+            <delete-right-tab if.bind="selectedObjectService.selectedTab === 'Delete Right'"></delete-right-tab>
+            <can-create-instance-tab
+                    if.bind="selectedObjectService.selectedTab === 'Can Create Instance'"></can-create-instance-tab>
+        </div>
+    </div>
+</template>

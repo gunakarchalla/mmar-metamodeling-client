@@ -1,0 +1,370 @@
+@use "@material/textfield/mdc-text-field";
+@use "@material/textfield/_index" as textfield;
+@use "@material/form-field/_index" as form-field;
+@use "@aurelia-mdc-web/text-field" as AuTextField;
+@use '@material/switch';
+@use '@material/theme/color-palette';
+@use '@material/theme/shadow-dom';
+@use '@material/snackbar';
+@import "color_definition.scss";
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+}
+
+.top-nav-bar {
+  background-color: $primary;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.toolbar-container {
+  padding: 10px;
+  display: flex;
+  flex-direction: row;
+}
+
+.main-body-tab-bar {
+  flex: 1 0 auto;
+  background-color: $background;
+}
+
+
+.content-container {
+  display: flex;
+  flex: 1;
+}
+
+.left-nav,
+.middle-body,
+.right-nav {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.left-nav {
+  align-self: flex-start;
+  padding: 0 10px 0 10px;
+  width: 20%;
+}
+
+.middle-body {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 3;
+  flex-shrink: 0;
+  //height: 80dvh;
+  min-width: 50%;
+  //overflow-y: auto;
+}
+
+.right-nav {
+  padding: 0 10px 0 10px;
+  flex-shrink: 0;
+  flex-grow: 1;
+  width: 20%;
+  max-width: 250px;
+}
+
+.tab-bar-horizontal {
+  height: 48px;
+  padding: 0;
+  overflow-x: hidden;
+  max-width: calc(100vh - 460px);
+  min-width: calc(100vh - 460px);
+}
+
+.custom-switch {
+  @include switch.theme((selected-handle-color: $enableGreen));
+  @include switch.theme((unselected-handle-color: $disableRed));
+  @include switch.theme((unselected-focus-handle-color: $disableRedDark));
+  @include switch.theme((selected-focus-handle-color: $enableGreenDark));
+
+  @include switch.theme((selected-track-color: $enableGreen));
+  @include switch.theme((unselected-track-color: $disableRed));
+  @include switch.theme((unselected-focus-track-color: $disableRedDark));
+  @include switch.theme((selected-focus-track-color: $enableGreenDark));
+
+}
+
+.mdc-expandable .mdc-expandable__content-container .mdc-expandable__content {
+  padding: 0;
+}
+
+.general-tab-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+}
+
+.attr-attribute-type {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.three_canvas,
+.attribute {
+  width: 100%;
+  height: 100%;
+}
+
+.attribute {
+  margin-bottom: 10%;
+}
+
+.attribute .mdc-text-field {
+  width: 100%;
+}
+
+.logWindow {
+  height: 19%;
+  border-top: 1px solid $line-separator;
+  margin: 0;
+  padding: 0;
+}
+
+.block {
+  display: block;
+}
+
+.tab-content {
+  display: flex;
+  justify-content: center;
+  overflow-y: auto;
+  max-height: calc(100vh - 250px);
+}
+
+.login-button {
+  margin-left: auto;
+}
+
+.footer {
+  background-color: $primary;
+  flex-shrink: 0;
+  margin-top: 10px;
+  position: sticky;
+  bottom: 0;
+
+  .container {
+    display: flex;
+    flex-wrap: wrap;
+
+    @media (min-width: 768px) {
+      justify-content: space-between;
+    }
+  }
+
+  .column {
+    padding-left: 50px;
+    flex: 1 1 30%;
+    min-width: 250px;
+
+    @media (max-width: 767px) {
+      flex-basis: 100%;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+
+      li {
+        margin-bottom: 5px;
+      }
+    }
+  }
+
+  .content {
+    text-align: center;
+    padding-top: 10px;
+    width: 100%;
+  }
+}
+
+.input-group-class .attr-type-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  .reusable-field {
+    order: 1;
+  }
+
+  .abstract-field {
+    order: 2;
+  }
+}
+
+.mdc-dialog-content-object-select > :first-child {
+  margin-top: 10px;
+}
+
+.custom-snackbar--snackbar-error {
+  @include snackbar.fill-color($error);
+  // width adapt to the content
+  @include snackbar.min-width(0);
+  //@include snackbar.min-width(800px);
+
+}
+
+.mdc-data-table-object-select,
+.mdc-data-table-child-parent {
+  width: 100%;
+  border-collapse: collapse;
+
+  th, td {
+    padding: 5px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  th:hover, tr:hover {
+    background-color: #f5f5f5;
+  }
+
+  td:first-child, th:first-child,
+  td:last-child, th:last-child {
+    min-width: 60px;
+  }
+
+  tr.selected {
+    background-color: #e0e0e0;
+  }
+}
+
+.object-card {
+  margin: 5px;
+  width: 100px;
+}
+
+.object-card__primary-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 100%;
+  padding: 0;
+
+  &.selected {
+    background-color: #e0e0e0;
+  }
+}
+
+.object-card__primary-action__name {
+  font-size: .9em;
+  word-break: break-word;
+  text-align: center;
+}
+
+.mdc-image-list__item {
+  margin: 0 auto;
+  padding: 0;
+  width: 50px;
+}
+
+.solid_hr_list {
+  width: 90%;
+  margin: 10px auto;
+  color: $primary;
+}
+
+.solid_hr-top {
+  width: 95%;
+  margin-top: 0;
+  color: $primary;
+}
+
+.object-card-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  max-height: calc(100dvh - 600px);
+  overflow-y: auto;
+}
+
+.mdc-dialog__title + .mdc-dialog__content,
+.mdc-dialog__header + .mdc-dialog__content {
+  padding-top: 10px;
+}
+
+.top-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+
+  .search-bar {
+    width: 20%;
+    height: 40px;
+  }
+}
+
+.image-list {
+  width: 50px;
+}
+
+.no-connection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  height: 100%;
+
+  .material-icons {
+    font-size: 100px;
+  }
+}
+
+.input-group-parent-child {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-self: center;
+}
+
+.action-buttons .move-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 50%;
+}
+
+.mdc-text-field {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+
+.mdc-top-app-bar {
+  position: unset;
+  background: transparent;
+  color: #000;
+  width: 100%;
+}
+
+.unifr-logo {
+  width: 5%;
+  margin-right: 10px;
+}
+
+.search-left-nav {
+  width: 100%;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

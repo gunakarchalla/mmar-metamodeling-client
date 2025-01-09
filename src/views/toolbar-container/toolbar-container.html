@@ -1,0 +1,23 @@
+<template>
+    <import from="../signin-signup-window/signin-signup-window"></import>
+
+    <button class="button-toolbar" click.trigger="undo()" disabled mdc-button mdc-tooltip="undo" outlined>
+        <mdc-icon>undo</mdc-icon>
+    </button>
+    <button click.trigger="redo()" disabled mdc-button mdc-tooltip="redo" outlined>
+        <mdc-icon>redo</mdc-icon>
+    </button>
+
+    <mdc-button class="button-toolbar" click.trigger="refresh()" mdc-tooltip="refresh" outlined>
+        <mdc-icon>refresh</mdc-icon>
+    </mdc-button>
+    <mdc-button class="button-toolbar" click.trigger="test()" if.bind="userService.currentUser.isAdmin" outlined>
+        <mdc-icon>bug_report</mdc-icon>
+    </mdc-button>
+
+    <mdc-button class="button-toolbar" click.trigger="save()" mdc-tooltip="save" outlined>
+        <mdc-icon>save</mdc-icon>
+    </mdc-button>
+
+    <signin-signup-window class="button-toolbar login-button"></signin-signup-window>
+</template>

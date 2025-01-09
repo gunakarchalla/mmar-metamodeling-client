@@ -1,0 +1,25 @@
+<template>
+    <import from="../toolbar-container/toolbar-container"></import>
+    <import from="../left-nav/left-nav"></import>
+    <import from="../middle-body/middle-body"></import>
+    <import from="../right-nav/right-nav"></import>
+
+    <toolbar-container class="toolbar-container"></toolbar-container>
+    <hr class="solid_hr-top"/>
+
+    <div class="content-container" if.bind="isConnected">
+        <left-nav class="left-nav"></left-nav>
+        <middle-body class="middle-body"></middle-body>
+        <right-nav class="right-nav"></right-nav>
+    </div>
+
+    <div class="no-connection" else>
+        <mdc-icon>
+            <i class="material-icons">cloud_off</i>
+        </mdc-icon>
+        <div class="no-connection__text">
+            <p>Oops! No connection to the backend</p>
+        </div>
+    </div>
+
+</template>
