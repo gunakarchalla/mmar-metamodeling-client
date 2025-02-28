@@ -15,6 +15,7 @@ export class LeftNav {
     @observable isLoadingAttributes = true;
     @observable isLoadingUsergroups = true;
     @observable isLoadingUsers = true;
+    @observable isLoadingProcedures = true;
     private isAdmin = false;
     private subscription: IDisposable;
 
@@ -80,6 +81,12 @@ export class LeftNav {
                 this.isLoadingPorts = false;
                 break;
 
+            case "Procedure":
+                this.isLoadingProcedures = true;
+                await this.backendService.getProcedures();
+                this.isLoadingProcedures = false;
+                break;
+
             case "User":
                 this.isLoadingUsers = true;
                 await this.backendService.getUsers();
@@ -101,6 +108,7 @@ export class LeftNav {
                 this.isLoadingPorts = true;
                 this.isLoadingAttributeTypes = true;
                 this.isLoadingAttributes = true;
+                this.isLoadingProcedures = true;
                 this.isLoadingUsergroups = true;
                 this.isLoadingUsers = true;
 
@@ -122,6 +130,9 @@ export class LeftNav {
 
                 await this.backendService.getPorts();
                 this.isLoadingPorts = false;
+
+                await this.backendService.getProcedures();
+                this.isLoadingProcedures = false;
 
                 await this.backendService.getUserGroups();
                 this.isLoadingUsergroups = false;

@@ -19,6 +19,7 @@ import {Logger} from "./logger";
 import {Usergroup} from "../../../../mmar-global-data-structure/models/meta/Metamodel_usergroups.structure";
 import {User} from "../../../../mmar-global-data-structure/models/meta/Metamodel_users.structure";
 import {ColumnStructure} from "../../../../mmar-global-data-structure/models/meta/Metamodel_columns.structure";
+import { Procedure } from "../../../../mmar-global-data-structure";
 
 singleton();
 
@@ -34,6 +35,7 @@ export class SelectedObjectService {
     public roles: Role[] = [];
     public userGroups: Usergroup[] = [];
     public users: User[] = [];
+    public procedures: Procedure[] = [];
 
     @bindable public selectedObject:
         | SceneType
@@ -43,6 +45,7 @@ export class SelectedObjectService {
         | AttributeType
         | Attribute
         | User
+        | Procedure
         | Usergroup
         | undefined = undefined;
     public type: string | undefined = undefined;
@@ -60,6 +63,7 @@ export class SelectedObjectService {
         this.attributeTypes = [];
         this.attributes = [];
         this.roles = [];
+        this.procedures = [];
         this.userGroups = [];
         this.users = [];
         this.selectedObject = undefined;
@@ -71,6 +75,7 @@ export class SelectedObjectService {
         | Class
         | Relationclass
         | Port
+        | Procedure
         | User
         | Usergroup
         | AttributeType
@@ -83,6 +88,7 @@ export class SelectedObjectService {
         | Relationclass
         | Port
         | User
+        | Procedure
         | Usergroup
         | AttributeType
         | Attribute | Role | null {
@@ -151,6 +157,14 @@ export class SelectedObjectService {
                     return role;
                 });
                 break;
+            case "Procedure":
+                this.procedures = this.procedures.map((procedure) => {
+                    if (procedure.uuid === obj.uuid) {
+                        return obj as Procedure;
+                    }
+                    return procedure;
+                }
+                );
             case "UserGroup":
                 this.userGroups = this.userGroups.map((usergroup) => {
                     if (usergroup.uuid === obj.uuid) {
@@ -198,6 +212,10 @@ export class SelectedObjectService {
             case "Port":
                 this.selectedObject = this.ports.find((port) => port.uuid === objUuid);
                 //this.selectedObject = Port.fromJS(this.selectedObject) as Port;
+                break;
+            case "Procedure":
+                this.selectedObject = this.procedures.find((procedure) => procedure.uuid === objUuid);
+                //this.selectedObject = Procedure.fromJS(this.selectedObject) as Procedure;
                 break;
             case "AttributeType":
                 this.selectedObject = this.attributeTypes.find(
@@ -251,6 +269,7 @@ export class SelectedObjectService {
         this.setAttributeTypes([]);
         this.setAttributes([]);
         this.setRoles([]);
+        this.setProcedures([]);
         this.setUserGroups([]);
         this.setUsers([]);
         this.deselectObject();
@@ -265,6 +284,7 @@ export class SelectedObjectService {
             {collection: this.getAttributeTypes(), type: "AttributeType"},
             {collection: this.getAttributes(), type: "Attribute"},
             {collection: this.getRoles(), type: "Role"},
+            {collection: this.getProcedures(), type: "Procedure"},
             {collection: this.getUserGroups(), type: "UserGroup"},
             {collection: this.getUsers(), type: "User"},
         ];
@@ -335,6 +355,11 @@ export class SelectedObjectService {
             case "UserGroup":
                 this.selectedObjectRemoveUserGroup(uuid);
                 break;
+            //todo: add procedures -something like
+            // case "Procedure":
+            //     this.selectedObjectRemoveProcedure(uuid);
+            //     break;
+
             //todo: add user
             default:
                 if (this.getTypeFromUuid(uuid)) {
@@ -781,6 +806,7 @@ export class SelectedObjectService {
         toReturn.push(...this.ports);
         toReturn.push(...this.attributeTypes);
         toReturn.push(...this.attributes);
+        toReturn.push(...this.procedures);
         return toReturn;
     }
 
@@ -902,6 +928,24 @@ export class SelectedObjectService {
         this.ports = this.ports.filter((port) => port.uuid !== portUuid);
     }
 
+    setProcedures(procedures: Procedure[]) {
+        this.procedures = procedures;
+    }
+
+    getProcedures(): Procedure[] {
+        return this.procedures;
+    }
+
+    addProcedure(procedure: Procedure) {
+        this.procedures.push(procedure);
+    }
+
+    removeProcedure(procedureUuid: UUID) {
+        this.procedures = this.procedures.filter(
+            (procedure) => procedure.uuid !== procedureUuid,
+        );
+    }
+
     setAttributeTypes(attributeTypes: AttributeType[]) {
         this.attributeTypes = attributeTypes;
     }
@@ -961,6 +1005,8 @@ export class SelectedObjectService {
                     return this.getAttributes();
                 case "Port":
                     return this.getPorts();
+                case "Procedure":
+                    return this.getProcedures();
                 case "User":
                     return this.getUsers();
                 case "UserGroup":
@@ -972,6 +1018,7 @@ export class SelectedObjectService {
                     //toReturn = toReturn.concat(this.getAttributeTypes());
                     toReturn = toReturn.concat(this.getAttributes());
                     toReturn = toReturn.concat(this.getPorts());
+                    toReturn = toReturn.concat(this.getProcedures());
                     return toReturn;
                 default:
                     console.warn(`Unknown type: ${type}`);
@@ -1008,6 +1055,9 @@ export class SelectedObjectService {
             case "User":
                 this.setUsers(objects as User[]);
                 break;
+            case "Procedure":
+                this.setProcedures(objects as Procedure[]);
+                break;
             default:
                 console.warn(`Unknown type: ${type}`);
         }
@@ -1042,6 +1092,9 @@ export class SelectedObjectService {
                     break;
                 case "User":
                     this.addUser(object as User);
+                    break;
+                case "Procedure":
+                    this.addProcedure(object as Procedure);
                     break;
                 default:
                     console.warn(`Unknown type: ${type}`);
@@ -1121,6 +1174,9 @@ export class SelectedObjectService {
                     break;
                 case "User":
                     this.removeUser((object as User).uuid);
+                    break;
+                case "Procedure":
+                    this.removeProcedure((object as Procedure).uuid);
                     break;
                 default:
                     console.warn(`Unknown type: ${type}`);

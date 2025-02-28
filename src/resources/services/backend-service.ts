@@ -14,6 +14,7 @@ import { Role } from "../../../../mmar-global-data-structure/models/meta/Metamod
 import { MetaObject } from "../../../../mmar-global-data-structure/models/meta/Metamodel_metaobjects.structure";
 import { Logger } from "./logger";
 import { UserService } from "./user-service";
+import { Procedure } from "../../../../mmar-global-data-structure";
 
 singleton();
 
@@ -115,6 +116,15 @@ export class BackendService {
   async getPorts(): Promise<Port[]> {
     return this.fetchData<Port>("metamodel/ports", "Port");
   }
+
+  async getProcedures(): Promise<Procedure[]> {
+    return this.fetchData<Procedure>("metamodel/procedures", "Procedure");
+  }
+
+  async getIndependentProcedures(): Promise<Procedure[]> {
+    return this.fetchData<Procedure>("metamodel/independent_procedures", "Procedure");
+  }
+
 
   async getUsersByUserGroupUuid(uuid: string): Promise<User[]> {
     return this.fetchData<User>(`users/usergroups/${uuid}`, "User");
@@ -283,6 +293,8 @@ export class BackendService {
           return this.getAttributes();
         case "Port":
           return this.getPorts();
+        case "Procedure":
+          return this.getProcedures();
         case "UserGroup":
           return this.getUserGroups();
         case "User":
@@ -318,6 +330,9 @@ export class BackendService {
         break;
       case "Role":
         return "roles";
+        break;
+      case "Procedure":
+        return "procedures";
         break;
       case "UserGroup":
         return "userGroups";
