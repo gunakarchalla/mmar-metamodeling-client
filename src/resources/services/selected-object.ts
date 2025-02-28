@@ -355,10 +355,9 @@ export class SelectedObjectService {
             case "UserGroup":
                 this.selectedObjectRemoveUserGroup(uuid);
                 break;
-            //todo: add procedures -something like
-            // case "Procedure":
-            //     this.selectedObjectRemoveProcedure(uuid);
-            //     break;
+            case "Procedure":
+                this.selectedObjectRemoveProcedure(uuid);
+                break;
 
             //todo: add user
             default:
@@ -614,10 +613,14 @@ export class SelectedObjectService {
             case "UserGroup":
                 this.selecedObjectAddUserGroup(uuid)
                 break;
+            case "Procedure":
+                this.selectedObjectAddProcedure(uuid);
+                break;
             default:
                 console.warn(`Unknown type: ${type}`);
         }
     }
+
 
     selecedObjectAddUserGroup(uuid: UUID) {
         this.selectedObject = User.fromJS(this.selectedObject) as User;
@@ -629,6 +632,30 @@ export class SelectedObjectService {
         this.selectedObject.add_has_user_group(usrgrp);
 
     }
+
+    selectedObjectAddProcedure(uuid: UUID) {
+        this.selectedObject = this.selectedObject as SceneType;
+        this.selectedObject.procedures.push(
+            this.procedures.find((c) => c.uuid === uuid) as Procedure,
+        );
+        this.logger.log(
+            `Added procedure ${uuid} to selected object ${this.selectedObject.uuid}`,
+            "info",
+        );
+    }
+
+    selectedObjectRemoveProcedure(uuid: UUID) {
+        this.selectedObject = this.selectedObject as SceneType;
+        this.logger.log(
+            `Removed Procedure ${uuid} from selected object ${this.selectedObject.uuid}`,
+            "info",
+        );
+        this.selectedObject.procedures = this.selectedObject.procedures.filter(
+            (procedure_) => procedure_.uuid !== uuid,
+        );
+    }
+
+    
 
     attributeTypeAddColumn(uuid: UUID, sequence: number) {
         const attribute = this.getObjectFromUuid(uuid) as Attribute;

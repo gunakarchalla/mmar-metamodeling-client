@@ -20,6 +20,7 @@ export class MiddleBody {
                 "AttributeType",
                 "User",
                 "UserGroup",
+                "Procedure"
             ],
         },
         {
@@ -37,6 +38,7 @@ export class MiddleBody {
         {label: "Delete Right", types: ["UserGroup"]},
         {label: "Can Create Instance", types: ["UserGroup"]},
         {label: "User Groups", types: ["User"]},
+        {label: "Procedures", types: ["SceneType"]},
     ];
 
     constructor(

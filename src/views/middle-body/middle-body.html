@@ -13,6 +13,7 @@
     <import from="./delete-right-tab/delete-right-tab"></import>
     <import from="./can-create-instance-tab/can-create-instance-tab"></import>
     <import from="./usergroup-tab/usergroup-tab"></import>
+    <import from="./procedures-tab/procedures-tab"></import>
 
     <div if.bind="selectedObjectService.selectedObject">
         <mdc-tab-bar class="tab-bar">
@@ -40,6 +41,7 @@
             <read-right-tab if.bind="selectedObjectService.selectedTab === 'Read Right'"></read-right-tab>
             <write-right-tab if.bind="selectedObjectService.selectedTab === 'Write Right'"></write-right-tab>
             <delete-right-tab if.bind="selectedObjectService.selectedTab === 'Delete Right'"></delete-right-tab>
+            <procedures-tab if.bind="selectedObjectService.selectedTab === 'Procedures'"></procedures-tab>
             <can-create-instance-tab
                     if.bind="selectedObjectService.selectedTab === 'Can Create Instance'"></can-create-instance-tab>
         </div>
