@@ -1,4 +1,4 @@
-import {customElement, EventAggregator, inject} from "aurelia";
+import {bindable, customElement, EventAggregator, inject} from "aurelia";
 import {MdcSnackbarService} from "@aurelia-mdc-web/snackbar";
 import {MdcDialog} from "@aurelia-mdc-web/dialog";
 import {UserService} from "../../resources/services/user-service";
@@ -22,6 +22,9 @@ export class SigninSignupWindow {
 
     attached() {
         localStorage.getItem("auth_token") ? (this.mode = "Sign Out") : null;
+        if (this.mode === "Sign In") {
+            this.dialog.open();
+        }
     }
 
     async action() {
