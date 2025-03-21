@@ -7,6 +7,19 @@
     <import from="./general-tab-user/general-tab-user"></import>
     <import from="./general-tab-procedure/general-tab-procedure"></import>
     <section class="mt-3">
+        <!--  UUID -->
+        <div class="form-floating mb-3">
+            <input
+                    class="form-control"
+                    id="uuidInput"
+                    maxlength="256"
+                    placeholder="UUID"
+                    type="text"
+                    value.bind="selectedObjectService.selectedObject.uuid"
+                    readonly
+            >
+            <label for="uuidInput">UUID</label>
+        </div>
         <!-- Name Input -->
         <div class="form-floating mb-3">
             <input
