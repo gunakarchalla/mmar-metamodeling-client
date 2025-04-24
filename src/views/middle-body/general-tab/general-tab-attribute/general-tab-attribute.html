@@ -78,7 +78,7 @@
 
 
             <div class="form-floating mb-3" if.bind="facetsList.length===0">
-                <input
+                <textarea
                         blur.trigger="validateDefaultValue($event)"
                         class="form-control"
                         id="defaultValueInput"
@@ -86,7 +86,9 @@
                         placeholder="Default Value"
                         type="text"
                         value.bind="selectedObjectService.selectedObject.default_value"
-                >
+                        rows="3"
+                        style="height: 100px"
+                >                  
                 <label for="defaultValueInput">Default value</label>
                 <div class="invalid-feedback">
                     The default value must match the regular expression of the attribute type.
