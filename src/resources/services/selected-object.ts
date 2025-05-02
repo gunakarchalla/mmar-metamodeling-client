@@ -1,11 +1,12 @@
-import {bindable, EventAggregator, inject, singleton} from "aurelia";
-import {SceneType} from "../../../../mmar-global-data-structure/models/meta/Metamodel_scenetypes.structure";
-import {Class} from "../../../../mmar-global-data-structure/models/meta/Metamodel_classes.structure";
-import {Relationclass} from "../../../../mmar-global-data-structure/models/meta/Metamodel_relationclasses.structure";
-import {Port} from "../../../../mmar-global-data-structure/models/meta/Metamodel_ports.structure";
-import {AttributeType} from "../../../../mmar-global-data-structure/models/meta/Metamodel_attributetypes.structure";
-import {Attribute} from "../../../../mmar-global-data-structure/models/meta/Metamodel_attributes.structure";
-import {MetaObject, UUID,} from "../../../../mmar-global-data-structure/models/meta/Metamodel_metaobjects.structure";
+import { bindable, EventAggregator, inject, singleton } from "aurelia";
+import { SceneType } from "../../../../mmar-global-data-structure/models/meta/Metamodel_scenetypes.structure";
+import { Class } from "../../../../mmar-global-data-structure/models/meta/Metamodel_classes.structure";
+import { Relationclass } from "../../../../mmar-global-data-structure/models/meta/Metamodel_relationclasses.structure";
+import { Port } from "../../../../mmar-global-data-structure/models/meta/Metamodel_ports.structure";
+import { File } from "../../../../mmar-global-data-structure/models/meta/Metamodel_files.structure";
+import { AttributeType } from "../../../../mmar-global-data-structure/models/meta/Metamodel_attributetypes.structure";
+import { Attribute } from "../../../../mmar-global-data-structure/models/meta/Metamodel_attributes.structure";
+import { MetaObject, UUID, } from "../../../../mmar-global-data-structure/models/meta/Metamodel_metaobjects.structure";
 import {
     AttributeReference,
     ClassReference,
@@ -13,12 +14,12 @@ import {
     RelationClassReference,
     SceneTypeReference,
 } from "../../../../mmar-global-data-structure/models/meta/Metamodel_references.structure";
-import {Role} from "../../../../mmar-global-data-structure/models/meta/Metamodel_roles.structure";
-import {v4 as uuidv4} from "uuid";
-import {Logger} from "./logger";
-import {Usergroup} from "../../../../mmar-global-data-structure/models/meta/Metamodel_usergroups.structure";
-import {User} from "../../../../mmar-global-data-structure/models/meta/Metamodel_users.structure";
-import {ColumnStructure} from "../../../../mmar-global-data-structure/models/meta/Metamodel_columns.structure";
+import { Role } from "../../../../mmar-global-data-structure/models/meta/Metamodel_roles.structure";
+import { v4 as uuidv4 } from "uuid";
+import { Logger } from "./logger";
+import { Usergroup } from "../../../../mmar-global-data-structure/models/meta/Metamodel_usergroups.structure";
+import { User } from "../../../../mmar-global-data-structure/models/meta/Metamodel_users.structure";
+import { ColumnStructure } from "../../../../mmar-global-data-structure/models/meta/Metamodel_columns.structure";
 import { Procedure } from "../../../../mmar-global-data-structure";
 
 singleton();
@@ -36,12 +37,14 @@ export class SelectedObjectService {
     public userGroups: Usergroup[] = [];
     public users: User[] = [];
     public procedures: Procedure[] = [];
+    public files: File[] = [];
 
     @bindable public selectedObject:
         | SceneType
         | Class
         | Relationclass
         | Port
+        | File
         | AttributeType
         | Attribute
         | User
@@ -60,6 +63,7 @@ export class SelectedObjectService {
         this.classes = [];
         this.relationClasses = [];
         this.ports = [];
+        this.files = [];
         this.attributeTypes = [];
         this.attributes = [];
         this.roles = [];
@@ -75,6 +79,7 @@ export class SelectedObjectService {
         | Class
         | Relationclass
         | Port
+        | File
         | Procedure
         | User
         | Usergroup
@@ -87,6 +92,7 @@ export class SelectedObjectService {
         | Class
         | Relationclass
         | Port
+        | File
         | User
         | Procedure
         | Usergroup
@@ -133,6 +139,14 @@ export class SelectedObjectService {
                     return port;
                 });
                 break;
+            case "File":
+                this.files = this.files.map((file) => {
+                    if (file.uuid === obj.uuid) {
+                        return obj as File;
+                    }
+                    return file;
+                });
+                break;
             case "AttributeType":
                 this.attributeTypes = this.attributeTypes.map((attributeType) => {
                     if (attributeType.uuid === obj.uuid) {
@@ -165,6 +179,7 @@ export class SelectedObjectService {
                     return procedure;
                 }
                 );
+                break;
             case "UserGroup":
                 this.userGroups = this.userGroups.map((usergroup) => {
                     if (usergroup.uuid === obj.uuid) {
@@ -212,6 +227,10 @@ export class SelectedObjectService {
             case "Port":
                 this.selectedObject = this.ports.find((port) => port.uuid === objUuid);
                 //this.selectedObject = Port.fromJS(this.selectedObject) as Port;
+                break;
+            case "File":
+                this.selectedObject = this.files.find((file) => file.uuid === objUuid);
+                //this.selectedObject = File.fromJS(this.selectedObject) as File;
                 break;
             case "Procedure":
                 this.selectedObject = this.procedures.find((procedure) => procedure.uuid === objUuid);
@@ -266,6 +285,7 @@ export class SelectedObjectService {
         this.setClasses([]);
         this.setRelationClasses([]);
         this.setPorts([]);
+        this.setFiles([]);
         this.setAttributeTypes([]);
         this.setAttributes([]);
         this.setRoles([]);
@@ -277,18 +297,19 @@ export class SelectedObjectService {
 
     getTypeFromUuid(uuid: UUID): string | null {
         const typeMappings = [
-            {collection: this.getSceneTypes(), type: "SceneType"},
-            {collection: this.getClasses(), type: "Class"},
-            {collection: this.getRelationClasses(), type: "RelationClass"},
-            {collection: this.getPorts(), type: "Port"},
-            {collection: this.getAttributeTypes(), type: "AttributeType"},
-            {collection: this.getAttributes(), type: "Attribute"},
-            {collection: this.getRoles(), type: "Role"},
-            {collection: this.getProcedures(), type: "Procedure"},
-            {collection: this.getUserGroups(), type: "UserGroup"},
-            {collection: this.getUsers(), type: "User"},
+            { collection: this.getSceneTypes(), type: "SceneType" },
+            { collection: this.getClasses(), type: "Class" },
+            { collection: this.getRelationClasses(), type: "RelationClass" },
+            { collection: this.getPorts(), type: "Port" },
+            { collection: this.getFiles(), type: "File" },
+            { collection: this.getAttributeTypes(), type: "AttributeType" },
+            { collection: this.getAttributes(), type: "Attribute" },
+            { collection: this.getRoles(), type: "Role" },
+            { collection: this.getProcedures(), type: "Procedure" },
+            { collection: this.getUserGroups(), type: "UserGroup" },
+            { collection: this.getUsers(), type: "User" },
         ];
-        for (const {collection, type} of typeMappings) {
+        for (const { collection, type } of typeMappings) {
             if (collection.some(item => item.uuid === uuid)) {
                 return type;
             }
@@ -655,7 +676,7 @@ export class SelectedObjectService {
         );
     }
 
-    
+
 
     attributeTypeAddColumn(uuid: UUID, sequence: number) {
         const attribute = this.getObjectFromUuid(uuid) as Attribute;
@@ -831,6 +852,7 @@ export class SelectedObjectService {
         toReturn.push(...this.classes);
         toReturn.push(...this.relationClasses);
         toReturn.push(...this.ports);
+        toReturn.push(...this.files);
         toReturn.push(...this.attributeTypes);
         toReturn.push(...this.attributes);
         toReturn.push(...this.procedures);
@@ -955,6 +977,22 @@ export class SelectedObjectService {
         this.ports = this.ports.filter((port) => port.uuid !== portUuid);
     }
 
+    setFiles(files: File[]) {
+        this.files = files;
+    }
+
+    getFiles(): File[] {
+        return this.files;
+    }
+
+    addFile(file: File) {
+        this.files.push(file);
+    }
+
+    removeFile(fileUuid: UUID) {
+        this.files = this.files.filter((file) => file.uuid !== fileUuid);
+    }
+
     setProcedures(procedures: Procedure[]) {
         this.procedures = procedures;
     }
@@ -1032,6 +1070,8 @@ export class SelectedObjectService {
                     return this.getAttributes();
                 case "Port":
                     return this.getPorts();
+                case "File":
+                    return this.getFiles();
                 case "Procedure":
                     return this.getProcedures();
                 case "User":
@@ -1045,6 +1085,7 @@ export class SelectedObjectService {
                     //toReturn = toReturn.concat(this.getAttributeTypes());
                     toReturn = toReturn.concat(this.getAttributes());
                     toReturn = toReturn.concat(this.getPorts());
+                    toReturn = toReturn.concat(this.getFiles());
                     toReturn = toReturn.concat(this.getProcedures());
                     return toReturn;
                 default:
@@ -1069,6 +1110,9 @@ export class SelectedObjectService {
                 break;
             case "Port":
                 this.setPorts(objects as Port[]);
+                break;
+            case "File":
+                this.setFiles(objects as File[]);
                 break;
             case "AttributeType":
                 this.setAttributeTypes(objects as AttributeType[]);
@@ -1107,6 +1151,9 @@ export class SelectedObjectService {
                     break;
                 case "Port":
                     this.addPort(object as Port);
+                    break;
+                case "File":
+                    this.addFile(object as File);
                     break;
                 case "AttributeType":
                     this.addAttributeType(object as AttributeType);
@@ -1189,6 +1236,9 @@ export class SelectedObjectService {
                     break;
                 case "Port":
                     this.removePort((object as Port).uuid);
+                    break;
+                case "File":
+                    this.removeFile((object as File).uuid);
                     break;
                 case "AttributeType":
                     this.removeAttributeType((object as AttributeType).uuid);

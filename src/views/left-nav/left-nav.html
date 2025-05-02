@@ -39,6 +39,12 @@
                 <object-list if.bind="!isLoadingPorts" object-list.bind="selectedObjectService.ports"
                         type="Port"></object-list>
         </mdc-expandable>
+        <mdc-expandable accordion>
+                <div au-slot="caption">Files</div>
+                <mdc-linear-progress open.bind="isLoadingFiles"></mdc-linear-progress>
+                <object-list if.bind="!isLoadingFiles" object-list.bind="selectedObjectService.files"
+                        type="Files"></object-list>
+        </mdc-expandable>
         <!-- Expandable for Procedures -->
         <mdc-expandable accordion>
                 <div au-slot="caption">Procedures</div>

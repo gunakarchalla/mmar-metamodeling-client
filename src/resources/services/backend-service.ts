@@ -7,6 +7,7 @@ import { AttributeType } from "../../../../mmar-global-data-structure/models/met
 import { Attribute } from "../../../../mmar-global-data-structure/models/meta/Metamodel_attributes.structure";
 import { Relationclass } from "../../../../mmar-global-data-structure/models/meta/Metamodel_relationclasses.structure";
 import { Port } from "../../../../mmar-global-data-structure/models/meta/Metamodel_ports.structure";
+import { File } from "../../../../mmar-global-data-structure/models/meta/Metamodel_files.structure";
 import { Usergroup } from "../../../../mmar-global-data-structure/models/meta/Metamodel_usergroups.structure";
 import { User } from "../../../../mmar-global-data-structure/models/meta/Metamodel_users.structure";
 import { v4 as uuidv4 } from "uuid";
@@ -115,6 +116,10 @@ export class BackendService {
 
   async getPorts(): Promise<Port[]> {
     return this.fetchData<Port>("metamodel/ports", "Port");
+  }
+
+  async getFiles(): Promise<File[]> {
+    return this.fetchData<File>("metamodel/files", "File");
   }
 
   async getProcedures(): Promise<Procedure[]> {
@@ -293,6 +298,8 @@ export class BackendService {
           return this.getAttributes();
         case "Port":
           return this.getPorts();
+        case "File":
+          return this.getFiles();
         case "Procedure":
           return this.getProcedures();
         case "UserGroup":
@@ -327,6 +334,9 @@ export class BackendService {
         break;
       case "Port":
         return "ports";
+        break;
+      case "File":
+        return "files";
         break;
       case "Role":
         return "roles";
