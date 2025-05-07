@@ -45,6 +45,8 @@ export class ModalObjectSelect {
       this.items = this.selectedObjectService.getObjects("Attribute");
     } else if (this.objecttype === "Bendpoint") {
       this.items = this.selectedObjectService.getObjects("Class");
+    } else if (this.objecttype === "Procedure") { 
+      this.items = this.selectedObjectService.getObjects("Procedure");
     } else {
       this.items = this.selectedObjectService.getObjects(this.objecttype);
     }

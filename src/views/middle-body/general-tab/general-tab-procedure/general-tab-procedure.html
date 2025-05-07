@@ -1,0 +1,17 @@
+<template>
+    <section aria-label="Input Form" class="input-group-attr-type">
+        <fieldset class="border p-2">
+            <legend class="float-none w-auto p-2 col-form-label">Procedure definition</legend>
+
+            <textarea
+                    class="form-control"
+                    id="definition"
+                    placeholder="Procedure definition"
+                    rows="10"
+                    style="height: 100px"
+                    value.bind="selectedObjectService.selectedObject.definition"
+            ></textarea>
+
+        </fieldset>
+    </section>
+</template>

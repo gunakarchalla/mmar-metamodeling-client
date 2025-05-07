@@ -14,6 +14,8 @@ export class MainBodyTabBar {
     }
 
     async attached() {
+        //wait 1 sec
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         this.checkConnection();
     }
 
