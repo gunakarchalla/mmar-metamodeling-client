@@ -6,56 +6,32 @@
     <import from="./general-tab-relationclass/general-tab-relationclass"></import>
     <import from="./general-tab-user/general-tab-user"></import>
     <import from="./general-tab-procedure/general-tab-procedure"></import>
+    <import from="./general-tab-file/general-tab-file"></import>
     <section class="mt-3">
         <!--  UUID -->
         <div class="form-floating mb-3">
-            <input
-                    class="form-control"
-                    id="uuidInput"
-                    maxlength="256"
-                    placeholder="UUID"
-                    type="text"
-                    value.bind="selectedObjectService.selectedObject.uuid"
-                    readonly
-            >
+            <input class="form-control" id="uuidInput" maxlength="256" placeholder="UUID" type="text"
+                value.bind="selectedObjectService.selectedObject.uuid" readonly>
             <label for="uuidInput">UUID</label>
         </div>
         <!-- Name Input -->
         <div class="form-floating mb-3">
-            <input
-                    class="form-control"
-                    id="nameInput"
-                    maxlength="256"
-                    placeholder="Name"
-                    type="text"
-                    value.bind="selectedObjectService.selectedObject.name"
-            >
+            <input class="form-control" id="nameInput" maxlength="256" placeholder="Name" type="text"
+                value.bind="selectedObjectService.selectedObject.name">
             <label for="nameInput">Name</label>
         </div>
 
         <!-- Description Input -->
         <div class="form-floating mb-3">
-            <input
-                    class="form-control"
-                    id="descriptionInput"
-                    maxlength="256"
-                    placeholder="Description"
-                    type="text"
-                    value.bind="selectedObjectService.selectedObject.description"
-            >
+            <input class="form-control" id="descriptionInput" maxlength="256" placeholder="Description" type="text"
+                value.bind="selectedObjectService.selectedObject.description">
             <label for="descriptionInput">Description</label>
         </div>
 
         <!-- Geometry Input -->
         <div class="form-floating mb-3">
-            <textarea
-                    class="form-control"
-                    id="geometryInput"
-                    placeholder="Geometry"
-                    rows="3"
-                    style="height: 100px"
-                    value.bind="selectedObjectService.selectedObject.geometry"
-            ></textarea>
+            <textarea class="form-control" id="geometryInput" placeholder="Geometry" rows="3" style="height: 100px"
+                value.bind="selectedObjectService.selectedObject.geometry"></textarea>
             <label for="geometryInput">Geometry</label>
         </div>
 
@@ -67,30 +43,24 @@
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="twodCoordXInput">X</span>
                         <input aria-describedby="twodCoordXInput" aria-label="X" class="form-control"
-                               placeholder="2d x coordinate"
-                               type="number"
-                               value.bind="selectedObjectService.selectedObject.coordinates_2d.x"
-                        >
+                            placeholder="2d x coordinate" type="number"
+                            value.bind="selectedObjectService.selectedObject.coordinates_2d.x">
                     </div>
                 </div>
                 <div class="col">
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="twodCoordYInput">Y</span>
                         <input aria-describedby="twodCoordYInput" aria-label="Y" class="form-control"
-                               placeholder="2d y coordinate"
-                               type="number"
-                               value.bind="selectedObjectService.selectedObject.coordinates_2d.y"
-                        >
+                            placeholder="2d y coordinate" type="number"
+                            value.bind="selectedObjectService.selectedObject.coordinates_2d.y">
                     </div>
                 </div>
                 <div class="col">
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="twodCoordZInput">Z</span>
                         <input aria-describedby="twodCoordZInput" aria-label="Z" class="form-control"
-                               placeholder="2d z coordinate"
-                               type="number"
-                               value.bind="selectedObjectService.selectedObject.coordinates_2d.z"
-                        >
+                            placeholder="2d z coordinate" type="number"
+                            value.bind="selectedObjectService.selectedObject.coordinates_2d.z">
                     </div>
                 </div>
             </div>
@@ -104,30 +74,24 @@
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="abs2dCoordXInput">X</span>
                         <input aria-describedby="abs2dCoordXInput" aria-label="X" class="form-control"
-                               placeholder="Absolute x coordinate"
-                               type="number"
-                               value.bind="selectedObjectService.selectedObject.absolute_coordinate_3d.x"
-                        >
+                            placeholder="Absolute x coordinate" type="number"
+                            value.bind="selectedObjectService.selectedObject.absolute_coordinate_3d.x">
                     </div>
                 </div>
                 <div class="col">
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="abs2dCoordYInput">Y</span>
                         <input aria-describedby="abs2dCoordYInput" aria-label="Y" class="form-control"
-                               placeholder="Absolute y coordinate"
-                               type="number"
-                               value.bind="selectedObjectService.selectedObject.absolute_coordinate_3d.y"
-                        >
+                            placeholder="Absolute y coordinate" type="number"
+                            value.bind="selectedObjectService.selectedObject.absolute_coordinate_3d.y">
                     </div>
                 </div>
                 <div class="col">
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="abs2dCoordZInput">Z</span>
                         <input aria-describedby="abs2dCoordZInput" aria-label="Z" class="form-control"
-                               placeholder="Absolute z coordinate"
-                               type="number"
-                               value.bind="selectedObjectService.selectedObject.absolute_coordinate_3d.z"
-                        >
+                            placeholder="Absolute z coordinate" type="number"
+                            value.bind="selectedObjectService.selectedObject.absolute_coordinate_3d.z">
                     </div>
                 </div>
             </div>
@@ -141,30 +105,24 @@
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="rel2dCoordXInput">X</span>
                         <input aria-describedby="rel2dCoordXInput" aria-label="X" class="form-control"
-                               placeholder="Relative x coordinate"
-                               type="number"
-                               value.bind="selectedObjectService.selectedObject.relative_coordinate_3d.x"
-                        >
+                            placeholder="Relative x coordinate" type="number"
+                            value.bind="selectedObjectService.selectedObject.relative_coordinate_3d.x">
                     </div>
                 </div>
                 <div class="col">
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="rel2dCoordYInput">Y</span>
                         <input aria-describedby="rel2dCoordYInput" aria-label="Y" class="form-control"
-                               placeholder="Relative y coordinate"
-                               type="number"
-                               value.bind="selectedObjectService.selectedObject.relative_coordinate_3d.y"
-                        >
+                            placeholder="Relative y coordinate" type="number"
+                            value.bind="selectedObjectService.selectedObject.relative_coordinate_3d.y">
                     </div>
                 </div>
                 <div class="col">
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="rel2dCoordZInput">Z</span>
                         <input aria-describedby="rel2dCoordZInput" aria-label="Z" class="form-control"
-                               placeholder="Relative z coordinate"
-                               type="number"
-                               value.bind="selectedObjectService.selectedObject.relative_coordinate_3d.z"
-                        >
+                            placeholder="Relative z coordinate" type="number"
+                            value.bind="selectedObjectService.selectedObject.relative_coordinate_3d.z">
                     </div>
                 </div>
             </div>
@@ -179,10 +137,8 @@
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="rotationXInput">X</span>
                         <input aria-describedby="rotationXInput" aria-label="X" class="form-control"
-                               placeholder="X rotation"
-                               type="number"
-                               value.bind="selectedObjectService.selectedObject.rotation.x"
-                        >
+                            placeholder="X rotation" type="number"
+                            value.bind="selectedObjectService.selectedObject.rotation.x">
                     </div>
                 </div>
 
@@ -190,10 +146,8 @@
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="rotationYInput">Y</span>
                         <input aria-describedby="rotationYInput" aria-label="Y" class="form-control"
-                               placeholder="Y rotation"
-                               type="number"
-                               value.bind="selectedObjectService.selectedObject.rotation.y"
-                        >
+                            placeholder="Y rotation" type="number"
+                            value.bind="selectedObjectService.selectedObject.rotation.y">
                     </div>
                 </div>
 
@@ -201,10 +155,8 @@
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="rotationZInput">Z</span>
                         <input aria-describedby="rotationZInput" aria-label="Z" class="form-control"
-                               placeholder="Z rotation"
-                               type="number"
-                               value.bind="selectedObjectService.selectedObject.rotation.z"
-                        >
+                            placeholder="Z rotation" type="number"
+                            value.bind="selectedObjectService.selectedObject.rotation.z">
                     </div>
                 </div>
             </div>
@@ -212,39 +164,27 @@
 
 
         <!-- Attribute type -->
-        <general-tab-attribute
-                if.bind="selectedObjectService.type === 'Attribute'"
-        ></general-tab-attribute>
+        <general-tab-attribute if.bind="selectedObjectService.type === 'Attribute'"></general-tab-attribute>
 
         <!-- Attribute -->
-        <general-tab-attr-type
-                if.bind="selectedObjectService.type === 'AttributeType'"
-        ></general-tab-attr-type>
+        <general-tab-attr-type if.bind="selectedObjectService.type === 'AttributeType'"></general-tab-attr-type>
 
         <!-- Class -->
-        <general-tab-class
-                if.bind="selectedObjectService.type === 'Class'"
-        ></general-tab-class>
+        <general-tab-class if.bind="selectedObjectService.type === 'Class'"></general-tab-class>
 
         <!-- User group -->
-        <general-tab-usr-grp
-                if.bind="selectedObjectService.type === 'UserGroup'"
-        ></general-tab-usr-grp>
+        <general-tab-usr-grp if.bind="selectedObjectService.type === 'UserGroup'"></general-tab-usr-grp>
 
         <!-- RelationClass -->
-        <general-tab-relationclass
-                if.bind="selectedObjectService.type === 'RelationClass'"
-        ></general-tab-relationclass>
+        <general-tab-relationclass if.bind="selectedObjectService.type === 'RelationClass'"></general-tab-relationclass>
 
         <!-- User -->
-        <general-tab-user
-                if.bind="selectedObjectService.type === 'User'"
-        ></general-tab-user>
+        <general-tab-user if.bind="selectedObjectService.type === 'User'"></general-tab-user>
 
         <!-- Procedure -->
-        <general-tab-procedure
-                if.bind="selectedObjectService.type === 'Procedure'"
-        ></general-tab-procedure>
+        <general-tab-procedure if.bind="selectedObjectService.type === 'Procedure'"></general-tab-procedure>
 
+        <!-- Files -->
+        <general-tab-file if.bind="selectedObjectService.type === 'File'"></general-tab-procedure>
     </section>
 </template>
