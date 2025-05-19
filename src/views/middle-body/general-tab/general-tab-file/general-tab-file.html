@@ -2,35 +2,15 @@
     <import from="../../../object-card/object-card"></import>
     <import from="./dialog-upload-file/dialog-upload-file"></import>
 
-    <!-- <section aria-label="Input Form" class="input-group-file">
-        <fieldset class="border p-2">
-            <legend class="float-none w-auto p-2 col-form-label">File</legend>
-            <div class="attr-attribute-type">
-                <label>Content: </label>
-                <mdc-card class="object-card">
-                    <mdc-card-primary-action class="object-card__primary-action"
-                        mdc-tooltip="value.bind: selectedObjectService.selectedObject.attribute_type.name">
-                        <mdc-image-list-item class="mdc-image-list__item" src.bind="getImage()"></mdc-image-list-item>
-                        <div class="object-card__primary-action__name">
-                            ${selectedObjectService.selectedObject.attribute_type.name}
-                        </div>
-                    </mdc-card-primary-action>
-                </mdc-card>
-
-                <mdc-button outlined click.trigger="dialogUploadFile.open()" style="width: 100%;">Replace
-                    File</mdc-button>
-                <mdc-dialog view-model.ref="dialogUploadFile">
-                    <dialog-upload-file
-                        attribute-instance.bind="selectedObjectService.selectedObject"></dialog-upload-file>
-                </mdc-dialog>
-            </div>
-        </fieldset>
-    </section> -->
-    <mdc-button outlined click.trigger="dialogUploadFile.open()" style="width: 100%;">Replace
+    <div if.bind="imageString">
+        <img src.bind="imageString" alt="File Image" />
+    </div>
+    <mdc-button outlined click.trigger="dialogUploadFile.open()" style="width: 100% ">Replace
         File</mdc-button>
     <mdc-dialog view-model.ref="dialogUploadFile">
-        <dialog-upload-file attribute-instance.bind="selectedObjectService.selectedObject"></dialog-upload-file>
+        <dialog-upload-file file_doc.bind="image"></dialog-upload-file>
     </mdc-dialog>
-    <mdc-button outlined click.trigger="printSelected()" style="width: 100%;">Replace
+    <mdc-button outlined click.trigger="downloadFile()" style="width: 100%;">Download
         File</mdc-button>
+
 </template>

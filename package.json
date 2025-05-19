@@ -7,9 +7,9 @@
   "dependencies": {
     "@aurelia-mdc-web/all": "8.0.3-au2",
     "@aurelia/router": "2.0.0-beta.6",
-    "@uppy/core": "^4.2.3",
-    "@uppy/dashboard": "^4.1.2",
-    "@uppy/drag-drop": "^4.0.4",
+    "@uppy/core": "4.2.3",
+    "@uppy/dashboard": "4.1.2",
+    "@uppy/drag-drop": "4.0.4",
     "aurelia": "2.0.0-beta.6",
     "bootstrap": "5.3.3",
     "browser-process": "0.0.1",

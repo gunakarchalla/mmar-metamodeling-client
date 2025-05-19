@@ -3,18 +3,20 @@ import Dashboard from '@uppy/dashboard';
 import '@uppy/core/dist/style.min.css';
 import '@uppy/dashboard/dist/style.min.css';
 import { AttributeInstance } from '../../../../../../../mmar-global-data-structure';
+import { SelectedObjectService } from 'resources/services/selected-object';
 import { bindable } from "aurelia";
 import { validate as uuidValidate } from 'uuid';
 import { BackendService } from 'resources/services/backend-service';
 import { EventAggregator } from 'aurelia';
 export class DialogUploadFile {
-    private uppy: Uppy;
 
-    @bindable private attributeInstance: AttributeInstance;
+    // @bindable private attributeInstance: AttributeInstance;
+    @bindable private file_doc: globalThis.File;
 
     constructor(
         private backendService: BackendService,
         private eventAggregator: EventAggregator,
+        private uppy: Uppy,
     ) { }
 
     async attached() {
@@ -24,8 +26,8 @@ export class DialogUploadFile {
             }
         );
 
-        //Using uppy dashboard
-        this.uppy.use(Dashboard, { inline: true, target: '#forUpload', showProgressDetails: true, width: '100%', height: '200px', hideUploadButton: true });
+        // Using uppy dashboard
+        this.uppy.use(Dashboard, { inline: true, target: '#forUpload' });
     }
 
     load() {
@@ -49,11 +51,10 @@ export class DialogUploadFile {
                     // Create a proper binary File
                     const newFile = new File([byteArray], file.name, { type: file.type });
 
-                    const response = this.uuidValidate(this.attributeInstance.value) ? await this.fetchHelper.patchFileByUUID(this.attributeInstance.value, newFile) : await this.fetchHelper.postFile(newFile);
-                    const response = await this.backendService.getSpecificObject
+                    // const response = this.uuidValidate(this.attributeInstance.value) ? await this.fetchHelper.patchFileByUUID(this.attributeInstance.value, newFile) : await this.fetchHelper.postFile(newFile);
+                    const response = await this.backendService.getSpecificObject("", "File")
                     if (response) {
-                        // this.eventAggregator.publish('fileUploaded', this.attributeInstance);
-                        // this.attributeInstance.value = response.uuid;
+                        this.file_doc = newFile;
                     }
                 }
                 this.uppy.removeFile(file.id);
