@@ -8,6 +8,10 @@ import { bindable } from "aurelia";
 import { validate as uuidValidate } from 'uuid';
 import { BackendService } from 'resources/services/backend-service';
 import { EventAggregator } from 'aurelia';
+import { customElement, inject } from "aurelia";
+
+@customElement("dialog-upload-file")
+@inject(SelectedObjectService)
 export class DialogUploadFile {
 
     // @bindable private attributeInstance: AttributeInstance;
@@ -51,8 +55,7 @@ export class DialogUploadFile {
                     // Create a proper binary File
                     const newFile = new File([byteArray], file.name, { type: file.type });
 
-                    // const response = this.uuidValidate(this.attributeInstance.value) ? await this.fetchHelper.patchFileByUUID(this.attributeInstance.value, newFile) : await this.fetchHelper.postFile(newFile);
-                    const response = await this.backendService.getSpecificObject("", "File")
+                    const response = await this.backendService.patchFileByUUID(this.file_doc.name, newFile);
                     if (response) {
                         this.file_doc = newFile;
                     }

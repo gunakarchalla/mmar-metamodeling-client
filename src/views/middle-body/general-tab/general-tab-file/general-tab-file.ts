@@ -19,80 +19,56 @@ export class GeneralTabFile {
         private selectedObjectService: SelectedObjectService,
         private backendService: BackendService,
         // private uppy: Uppy,
-    ) { }
+    ) {
+        if (this.selectedObjectService.selectedObject) {
 
-    private image: globalThis.File | null = null;
+            // console.log("selectedObjectService.selectedObject:", this.selectedObjectService.selectedObject);
+            // console.log("selectedObjectService.selectedObject.data:", this.selectedObjectService.selectedObject["data"]);
+            this.file = this.selectedObjectService.selectedObject["data"] as globalThis.File;
+            // console.log("file:", this.file);
+            this.imageString = "data:image/png;base64," + Buffer.from(this.file["data"]).toString('base64');
+            // console.log("imageString:", this.imageString);
+        }
+
+        console.log("selectedObjectService.selectedObject:", this.selectedObjectService.selectedObject);
+    }
+
+    private file: globalThis.File | null = null;
     @bindable private imageString: string | null = null;
 
     downloadFile() {
-        const url = URL.createObjectURL(this.image);
+        const url = URL.createObjectURL(this.file);
         const a = document.createElement('a');
         a.href = url;
-        a.download = this.image?.name || 'download';
+        a.download = this.file?.name || 'download';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }
 
-    async attached() {
-        if (this.selectedObjectService.selectedObject) {
-            this.image = await this.backendService.getFileByUUID(this.selectedObjectService.selectedObject.uuid);
-            // this.image = await this.backendService.getSpecificObject(this.selectedObjectService.selectedObject.uuid, "File");
-            console.log("image:", this.image);
-            if (this.image) {
-                if (this.image.type.includes('model/gltf+json') || this.image.type.includes('application/octet-stream')) {
-                    this.imageString = await this.image.text();
-                } else {
-                    this.imageString = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                            const result = typeof reader.result === 'string' ? reader.result : '';
-                            resolve(result);
-                        };
-                        reader.onerror = (error) => {
-                            reject(error);
-                        };
-                        reader.readAsDataURL(this.image);
-                    });
-                }
-            }
-        }
-
-        // this.uppy = new Uppy({});
-        // this.uppy.use(Dashboard);
-    }
-
-    // load() {
-    //     const files = this.uppy.getFiles();
-    //     const reader = new FileReader();
-
-    //     if (files) {
-    //         for (const file of files) {
-    //             reader.readAsDataURL(file.data);
-    //             reader.onload = async () => {
-    //                 const dataURL = reader.result.toString();
-
-    //                 // Extract base64 data
-    //                 const base64Data = dataURL.split(',')[1];
-    //                 const binaryString = window.atob(base64Data);
-    //                 const byteArray = new Uint8Array(binaryString.length);
-    //                 for (let i = 0; i < binaryString.length; i++) {
-    //                     byteArray[i] = binaryString.charCodeAt(i);
-    //                 }
-
-    //                 // Create a proper binary File
-    //                 const newFile = new globalThis.File([byteArray], file.name, { type: file.type });
-
-    //                 const response = await this.backendService.patchFileByUUID(this.selectedObjectService.selectedObject.uuid, newFile);
-
-    //                 if (response) {
-    //                     // this.eventAggregator.publish('fileUploaded', this.attributeInstance);
-    //                     // this.attributeInstance.value = response.uuid;
-    //                 }
+    // async attached() {
+    //     if (this.selectedObjectService.selectedObject) {
+    //         this.file = await this.backendService.getFileByUUID(this.selectedObjectService.selectedObject.uuid);
+    //         // this.file = await this.backendService.getSpecificObject(this.selectedObjectService.selectedObject.uuid, "File");
+    //         console.log("file:", this.file);
+    //         if (this.file) {
+    //             if (this.file.type.includes('model/gltf+json') || this.file.type.includes('application/octet-stream')) {
+    //                 this.imageString = await this.file.text();
+    //             } else {
+    //                 this.imageString = await new Promise((resolve, reject) => {
+    //                     const reader = new FileReader();
+    //                     reader.onloadend = () => {
+    //                         const result = typeof reader.result === 'string' ? reader.result : '';
+    //                         resolve(result);
+    //                     };
+    //                     reader.onerror = (error) => {
+    //                         reject(error);
+    //                     };
+    //                     reader.readAsDataURL(this.file);
+    //                 });
     //             }
     //         }
     //     }
     // }
-
 }

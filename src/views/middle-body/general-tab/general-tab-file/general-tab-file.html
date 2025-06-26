@@ -2,15 +2,55 @@
     <import from="../../../object-card/object-card"></import>
     <import from="./dialog-upload-file/dialog-upload-file"></import>
 
-    <div if.bind="imageString">
+    <section aria-label="Input Form" class="input-group-attribute">
+        <fieldset class="border p-2">
+            <legend class="float-none w-auto p-2 col-form-label">File</legend>
+            <div class="attr-attribute-type">
+                <label>Content: </label>
+                <!-- <mdc-card class="object-card"
+                    if.bind="selectedObjectService.getObjectFromUuid(selectedObjectService.selectedObject.file)">
+                    <mdc-card-primary-action class="object-card__primary-action"
+                        mdc-tooltip="value.bind: selectedObjectService.getObjectFromUuid(selectedObjectService.selectedObject.file).name">
+                        <mdc-image-list-item class="mdc-image-list__item" src.bind="getImage()"></mdc-image-list-item>
+                        <div class="object-card__primary-action__name">
+                            ${selectedObjectService.getObjectFromUuid(selectedObjectService.selectedObject.file).name}
+                        </div>
+                    </mdc-card-primary-action>
+                </mdc-card> -->
+
+                <div if.bind="imageString">
+                    <img height="50%" width="50%" src.bind="imageString" alt="File Image" />
+                </div>
+
+                <div class="general-tab-stack">
+                    <button click.trigger="downloadFile()" mdc-button outlined>
+                        <mdc-icon> download</mdc-icon>
+                        Download File
+                    </button>
+
+                    <button click.trigger="dialogUploadFile.open()" mdc-button outlined>
+                        <mdc-icon> publish</mdc-icon>
+                        Replace File
+                    </button>
+                    <mdc-dialog view-model.ref="dialogUploadFile">
+                        <dialog-upload-file file_doc.two-way="image"></dialog-upload-file>
+                    </mdc-dialog>
+                </div>
+            </div>
+
+
+
+        </fieldset>
+    </section>
+    <!-- <div if.bind="imageString">
         <img src.bind="imageString" alt="File Image" />
     </div>
     <mdc-button outlined click.trigger="dialogUploadFile.open()" style="width: 100% ">Replace
         File</mdc-button>
     <mdc-dialog view-model.ref="dialogUploadFile">
-        <dialog-upload-file file_doc.bind="image"></dialog-upload-file>
+        <dialog-upload-file file_doc.two-way="image"></dialog-upload-file>
     </mdc-dialog>
     <mdc-button outlined click.trigger="downloadFile()" style="width: 100%;">Download
-        File</mdc-button>
+        File</mdc-button> -->
 
 </template>

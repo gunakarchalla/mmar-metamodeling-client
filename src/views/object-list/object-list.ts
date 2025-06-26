@@ -1,8 +1,8 @@
-import {bindable, customElement, EventAggregator, IDisposable, inject,} from "aurelia";
-import {SelectedObjectService} from "../../resources/services/selected-object";
-import {BackendService} from "../../resources/services/backend-service";
-import {MetaObject} from "../../../../mmar-global-data-structure/models/meta/Metamodel_metaobjects.structure";
-import {UserService} from "../../resources/services/user-service";
+import { bindable, customElement, EventAggregator, IDisposable, inject, } from "aurelia";
+import { SelectedObjectService } from "../../resources/services/selected-object";
+import { BackendService } from "../../resources/services/backend-service";
+import { MetaObject } from "../../../../mmar-global-data-structure/models/meta/Metamodel_metaobjects.structure";
+import { UserService } from "../../resources/services/user-service";
 
 @customElement("object-list")
 @inject(EventAggregator)
@@ -54,7 +54,7 @@ export class objectList {
             this.selectedobject.uuid,
             this.type,
         );
-        if (res.length > 0) {
+        if (res.status === 200) {
             this.filteredItems = this.objectList;
             this.selectedObjectService.deselectObject();
         }

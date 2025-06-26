@@ -16,6 +16,8 @@ import { MetaObject } from "../../../../mmar-global-data-structure/models/meta/M
 import { Logger } from "./logger";
 import { UserService } from "./user-service";
 import { Procedure } from "../../../../mmar-global-data-structure";
+import { fileURLToPath } from "url";
+import { HelperService } from "./helper-service";
 
 singleton();
 
@@ -31,6 +33,7 @@ export class BackendService {
     private selectedObjectService: SelectedObjectService,
     private logger: Logger,
     private userService: UserService,
+    private helperService: HelperService,
   ) {
     this.http.configure((config) =>
       config.withBaseUrl(this.baseUrl).withDefaults({
@@ -200,11 +203,25 @@ export class BackendService {
       type = this.getCorrectType(type);
       const token = localStorage.getItem("auth_token");
       const generatedUuid = uuidv4();
+      const formData = new FormData();
 
       const content = {
         uuid: generatedUuid,
         name: "New " + type,
       };
+
+      if (type === "files") {
+        const placeholderFile = await this.helperService.urltoFile(
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAAXNSR0IArs4c6QAAAHRJREFUGFcBaQCW/wFv8t3/dgt6AEF6ngAia2wA1JssAAEJ6en/UlQcAGqvmQAg5c4AkbeuAAFX1IH/Tn9jANk1ywD72+oAURLsAAHxiZj/HBd7AKuQXgBh1dgAZL+rAAH1ExD/AvgpACqw9wBrxn0AB3TZADviLEbMrYc8AAAAAElFTkSuQmCC",
+          "placeholder.png",
+          "image/png",
+        );
+        formData.append("file", placeholderFile);
+
+        content["file"] = {
+          uuid: generatedUuid,
+        };
+      }
 
       if (type === "attributes") {
         content["attribute_type"] = {
@@ -228,7 +245,7 @@ export class BackendService {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(content),
+        body: type === "files" ? formData : JSON.stringify(content),
       });
       if (!response.ok) throw new Error(`Failed to create ${type}`);
       const toReturn = await response.json();
@@ -336,7 +353,7 @@ export class BackendService {
         throw new Error(`${response.statusText} - ${await response.json()}`);
       this.selectedObjectService.removeObject(uuid);
 
-      return await response.json();
+      return response;
     } catch (error) {
       this.logger.log(`Error deleting ${type}: ${error}`, "error");
     }

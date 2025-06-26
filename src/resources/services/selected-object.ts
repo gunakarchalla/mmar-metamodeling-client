@@ -264,6 +264,7 @@ export class SelectedObjectService {
 
         this.type = type;
         const fullobj = this.getObjectFromUuid(objUuid);
+        console.log(`Selected object: ${fullobj}`);
         this.logger.log(`Selected object: ${fullobj.name}`, "info");
         this.eventAggregator.publish("SelectedObjectChanged", {
             selectedObject: fullobj,

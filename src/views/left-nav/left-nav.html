@@ -43,7 +43,7 @@
                 <div au-slot="caption">Files</div>
                 <mdc-linear-progress open.bind="isLoadingFiles"></mdc-linear-progress>
                 <object-list if.bind="!isLoadingFiles" object-list.bind="selectedObjectService.files"
-                        type="Files"></object-list>
+                        type="File"></object-list>
         </mdc-expandable>
         <!-- Expandable for Procedures -->
         <mdc-expandable accordion>
