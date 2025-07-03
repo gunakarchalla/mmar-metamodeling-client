@@ -16,4 +16,21 @@ export class HelperService {
             .then(res => res.arrayBuffer())
             .then(buf => new File([buf], filename, { type: mimeType }));
     }
+
+    buffertoBase64(buffer): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                if (typeof reader.result === 'string') {
+                    resolve(reader.result);
+                } else {
+                    resolve('');
+                }
+            };
+            reader.onerror = (error) => {
+                reject(error);
+            };
+            reader.readAsDataURL(new Blob([buffer]));
+        });
+    }
 }

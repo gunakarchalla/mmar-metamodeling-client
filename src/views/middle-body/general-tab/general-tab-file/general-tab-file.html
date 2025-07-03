@@ -18,9 +18,11 @@
                     </mdc-card-primary-action>
                 </mdc-card> -->
 
-                <div if.bind="imageString">
+                <!-- <div if.bind="imageString">
                     <img height="50%" width="50%" src.bind="imageString" alt="File Image" />
-                </div>
+                </div> -->
+
+                <img height="50%" width="50%" src.to-view="imageString" alt="File Image" />
 
                 <div class="general-tab-stack">
                     <button click.trigger="downloadFile()" mdc-button outlined>

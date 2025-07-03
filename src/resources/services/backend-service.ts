@@ -216,11 +216,10 @@ export class BackendService {
           "placeholder.png",
           "image/png",
         );
-        formData.append("file", placeholderFile);
 
-        content["file"] = {
-          uuid: generatedUuid,
-        };
+        formData.append("file", placeholderFile);
+        formData.append("uuid", generatedUuid);
+        formData.append("name", "New " + type);
       }
 
       if (type === "attributes") {

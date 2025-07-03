@@ -20,17 +20,12 @@ export class DialogUploadFile {
     constructor(
         private backendService: BackendService,
         private eventAggregator: EventAggregator,
-        private uppy: Uppy,
+        private uppy: Uppy = new Uppy(),
     ) { }
 
     async attached() {
 
-        this.uppy = new Uppy(
-            {
-            }
-        );
-
-        // Using uppy dashboard
+        // Configure Uppy instance
         this.uppy.use(Dashboard, { inline: true, target: '#forUpload' });
     }
 

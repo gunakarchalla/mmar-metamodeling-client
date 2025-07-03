@@ -25,6 +25,7 @@ export class objectList {
 
     async attached() {
         // sort the object alphabetically
+        console.log("Object list:", this.objectList);
         this.objectList.sort((a, b) => a.name.localeCompare(b.name));
         this.filteredItems = this.objectList;
         this.subscription = this.eventAggregator.subscribe(
@@ -43,7 +44,9 @@ export class objectList {
     }
 
     async addNewObject() {
+        console.log("Adding new object of type:", this.type);
         const retrivedObject = await this.backendService.createNewObject(this.type);
+        console.log("New object created:", retrivedObject);
         this.selectedObjectService.setSelectedObject(
             retrivedObject.uuid
         );

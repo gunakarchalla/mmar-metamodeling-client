@@ -100,11 +100,14 @@ export class SelectedObjectService {
         | Attribute | Role | null {
         if (!uuid) return null;
         const type = this.getTypeFromUuid(uuid);
+        console.log(`Getting type from uuid: ${uuid}, type: ${type}`);
         if (!type) return null;
         return this.getObjects(type).find((obj) => obj.uuid === uuid);
     }
 
     updateLocalObject(obj: MetaObject) {
+        console.log("obj:", obj);
+        console.log("obj.uuid:", obj.uuid);
         const type = this.getTypeFromUuid(obj.uuid);
         switch (type) {
             case "SceneType":
@@ -203,6 +206,7 @@ export class SelectedObjectService {
 
     // Method to set the selected object
     setSelectedObject(objUuid: string): void {
+        console.log(`Setting selected object with UUID: ${objUuid}`);
         const type = this.getTypeFromUuid(objUuid);
         //search for the object in the local storages and set the selected object to the found object
         switch (type) {
@@ -315,6 +319,8 @@ export class SelectedObjectService {
                 return type;
             }
         }
+        console.log("uuid:", uuid);
+        console.log("files:", this.getFiles());
         console.warn(`Unknown type for uuid: ${uuid}`);
         return null;
     }
