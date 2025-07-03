@@ -54,14 +54,20 @@ export class GeneralTabFile {
     @bindable private imageString: string = '';
 
     downloadFile() {
-        const url = URL.createObjectURL(this.file);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = this.file?.name || 'download';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        if (this.selectedObjectService.selectedObject) {
+            const fileData = this.selectedObjectService.selectedObject["data"]["data"];
+            const fileName = this.selectedObjectService.selectedObject.name;
+            const mimeType = this.selectedObjectService.selectedObject["type"];
+            const blob = new Blob([new Uint8Array(fileData)], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName || 'download';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
     }
 
     // async attached() {
