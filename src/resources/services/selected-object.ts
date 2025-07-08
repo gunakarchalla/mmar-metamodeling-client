@@ -106,8 +106,6 @@ export class SelectedObjectService {
     }
 
     updateLocalObject(obj: MetaObject) {
-        console.log("obj:", obj);
-        console.log("obj.uuid:", obj.uuid);
         const type = this.getTypeFromUuid(obj.uuid);
         switch (type) {
             case "SceneType":
@@ -206,7 +204,6 @@ export class SelectedObjectService {
 
     // Method to set the selected object
     setSelectedObject(objUuid: string): void {
-        console.log(`Setting selected object with UUID: ${objUuid}`);
         const type = this.getTypeFromUuid(objUuid);
         //search for the object in the local storages and set the selected object to the found object
         switch (type) {
@@ -268,7 +265,6 @@ export class SelectedObjectService {
 
         this.type = type;
         const fullobj = this.getObjectFromUuid(objUuid);
-        console.log(`Selected object: ${fullobj}`);
         this.logger.log(`Selected object: ${fullobj.name}`, "info");
         this.eventAggregator.publish("SelectedObjectChanged", {
             selectedObject: fullobj,

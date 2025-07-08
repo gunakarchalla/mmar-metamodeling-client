@@ -7,20 +7,6 @@
             <legend class="float-none w-auto p-2 col-form-label">File</legend>
             <div class="attr-attribute-type">
                 <label>Content: </label>
-                <!-- <mdc-card class="object-card"
-                    if.bind="selectedObjectService.getObjectFromUuid(selectedObjectService.selectedObject.file)">
-                    <mdc-card-primary-action class="object-card__primary-action"
-                        mdc-tooltip="value.bind: selectedObjectService.getObjectFromUuid(selectedObjectService.selectedObject.file).name">
-                        <mdc-image-list-item class="mdc-image-list__item" src.bind="getImage()"></mdc-image-list-item>
-                        <div class="object-card__primary-action__name">
-                            ${selectedObjectService.getObjectFromUuid(selectedObjectService.selectedObject.file).name}
-                        </div>
-                    </mdc-card-primary-action>
-                </mdc-card> -->
-
-                <!-- <div if.bind="imageString">
-                    <img height="50%" width="50%" src.bind="imageString" alt="File Image" />
-                </div> -->
 
                 <img height="50%" width="50%" src.to-view="imageString" alt="File Image" />
 
@@ -35,24 +21,10 @@
                         Replace File
                     </button>
                     <mdc-dialog view-model.ref="dialogUploadFile">
-                        <dialog-upload-file file_doc.two-way="image"></dialog-upload-file>
+                        <dialog-upload-file file-doc.bind="selectedObject"></dialog-upload-file>
                     </mdc-dialog>
                 </div>
             </div>
-
-
-
         </fieldset>
     </section>
-    <!-- <div if.bind="imageString">
-        <img src.bind="imageString" alt="File Image" />
-    </div>
-    <mdc-button outlined click.trigger="dialogUploadFile.open()" style="width: 100% ">Replace
-        File</mdc-button>
-    <mdc-dialog view-model.ref="dialogUploadFile">
-        <dialog-upload-file file_doc.two-way="image"></dialog-upload-file>
-    </mdc-dialog>
-    <mdc-button outlined click.trigger="downloadFile()" style="width: 100%;">Download
-        File</mdc-button> -->
-
 </template>

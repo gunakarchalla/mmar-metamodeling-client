@@ -125,29 +125,6 @@ export class BackendService {
     return this.fetchData<File>("metamodel/files", "File");
   }
 
-  // async getFileByUUID(uuid: string): Promise<File> {
-  //   try {
-  //     const token = localStorage.getItem("auth_token");
-  //     if (!token) return;
-  //     const response = await this.http.fetch(`metamodel/files/${uuid}`, {
-  //       method: "GET",
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-  //     if (!response.ok) {
-  //       throw new Error(`Failed to get file`);
-  //     }
-  //     const returnedObject = await response.json();
-  //     returnedObject.type = "File";
-  //     // update the object if it appears in the selected object service list
-  //     this.selectedObjectService.updateLocalObject(returnedObject);
-  //     return returnedObject;
-  //   } catch (error) {
-  //     this.logger.log(`Error getting file: ${error}`, "error");
-  //   }
-  // }
-
   async getFileByUUID(uuid: string): Promise<globalThis.File> {
     try {
       const response = await this.http.fetch(`metamodel/files/${uuid}`);

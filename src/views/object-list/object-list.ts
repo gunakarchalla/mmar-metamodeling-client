@@ -25,7 +25,6 @@ export class objectList {
 
     async attached() {
         // sort the object alphabetically
-        console.log("Object list:", this.objectList);
         this.objectList.sort((a, b) => a.name.localeCompare(b.name));
         this.filteredItems = this.objectList;
         this.subscription = this.eventAggregator.subscribe(
