@@ -2,17 +2,14 @@ import Uppy from '@uppy/core';
 import Dashboard from '@uppy/dashboard';
 import '@uppy/core/dist/style.min.css';
 import '@uppy/dashboard/dist/style.min.css';
-import { AttributeInstance } from '../../../../../../../mmar-global-data-structure';
 import { SelectedObjectService } from 'resources/services/selected-object';
 import { bindable } from "aurelia";
-import { validate as uuidValidate } from 'uuid';
-import { BackendService } from 'resources/services/backend-service';
 import { EventAggregator } from 'aurelia';
 import { customElement, inject } from "aurelia";
 import { File } from '../../../../../../../mmar-global-data-structure/models/meta/Metamodel_files.structure';
 
 @customElement("dialog-upload-file")
-@inject(SelectedObjectService, BackendService, EventAggregator)
+@inject(SelectedObjectService, EventAggregator)
 export class DialogUploadFile {
 
     // @bindable private attributeInstance: AttributeInstance;
@@ -20,7 +17,6 @@ export class DialogUploadFile {
 
     constructor(
         private selectedObjectService: SelectedObjectService,
-        private backendService: BackendService,
         private eventAggregator: EventAggregator,
         private uppy: Uppy = new Uppy(),
     ) { }

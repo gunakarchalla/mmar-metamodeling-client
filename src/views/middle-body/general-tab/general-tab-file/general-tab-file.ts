@@ -1,24 +1,14 @@
-import { bindable, customElement, inject, EventAggregator, IDisposable } from "aurelia";
+import { customElement, inject, EventAggregator, IDisposable } from "aurelia";
 import { SelectedObjectService } from "../../../../resources/services/selected-object";
-import { Attribute } from "../../../../../../mmar-global-data-structure/models/meta/Metamodel_attributes.structure";
 import { File } from "../../../../../../mmar-global-data-structure/models/meta/Metamodel_files.structure";
-import { BackendService } from "resources/services/backend-service";
-import Uppy from '@uppy/core';
-import Dashboard from '@uppy/dashboard';
-import '@uppy/core/dist/style.min.css';
-import '@uppy/dashboard/dist/style.min.css';
-import { HelperService } from "resources/services/helper-service";
-
 @customElement("general-tab-file")
-@inject(SelectedObjectService, BackendService, HelperService, EventAggregator)
+@inject(SelectedObjectService, EventAggregator)
 export class GeneralTabFile {
     private subscription: IDisposable;
     private selectedObject: File | null = null;
 
     constructor(
         private selectedObjectService: SelectedObjectService,
-        private backendService: BackendService,
-        private helperService: HelperService,
         private eventAggregator: EventAggregator,
     ) {
     }
@@ -27,14 +17,13 @@ export class GeneralTabFile {
     private imageString: string = '';
 
     binding() {
-        this.selectedObject = this.selectedObjectService.selectedObject as File;
         this.subscription = this.eventAggregator.subscribe('SelectedObjectChanged', () => {
-            // Check the type property instead of using instanceof
+            // Updates whenever file changes
             if (this.selectedObjectService.type === 'File') {
                 this.getFile();
             }
         });
-        // Also check on initial binding
+        // For initial binding
         if (this.selectedObjectService.type === 'File') {
             this.getFile();
         }
