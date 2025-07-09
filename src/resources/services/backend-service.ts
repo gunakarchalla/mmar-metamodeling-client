@@ -188,7 +188,7 @@ export class BackendService {
       };
 
       if (type === "files") {
-        const placeholderFile = await this.helperService.urltoFile(
+        const placeholderFile = await this.helperService.DataUrltoFile(
           "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAAXNSR0IArs4c6QAAAHRJREFUGFcBaQCW/wFv8t3/dgt6AEF6ngAia2wA1JssAAEJ6en/UlQcAGqvmQAg5c4AkbeuAAFX1IH/Tn9jANk1ywD72+oAURLsAAHxiZj/HBd7AKuQXgBh1dgAZL+rAAH1ExD/AvgpACqw9wBrxn0AB3TZADviLEbMrYc8AAAAAElFTkSuQmCC",
           "placeholder.png",
           "image/png",

@@ -7,6 +7,7 @@ import { bindable } from "aurelia";
 import { EventAggregator } from 'aurelia';
 import { customElement, inject } from "aurelia";
 import { File } from '../../../../../../../mmar-global-data-structure/models/meta/Metamodel_files.structure';
+import { HelperService } from 'resources/services/helper-service';
 
 @customElement("dialog-upload-file")
 @inject(SelectedObjectService, EventAggregator)
@@ -18,6 +19,7 @@ export class DialogUploadFile {
     constructor(
         private selectedObjectService: SelectedObjectService,
         private eventAggregator: EventAggregator,
+        private helperService: HelperService,
         private uppy: Uppy = new Uppy(),
     ) { }
 
@@ -33,23 +35,13 @@ export class DialogUploadFile {
 
         if (files) {
             for (const file of files) {
-                // console.log("File to upload:", file);
                 reader.readAsDataURL(file.data);
                 reader.onload = async () => {
                     const dataURL = reader.result.toString();
+                    const newFile = await this.helperService.DataUrltoFile(dataURL, file.name, file.type)
+                    const arrayBuffer = await newFile.arrayBuffer();
 
-                    // Extract base64 data
-                    const base64Data = dataURL.split(',')[1];
-                    const binaryString = window.atob(base64Data);
-                    const byteArray = new Uint8Array(binaryString.length);
-                    for (let i = 0; i < binaryString.length; i++) {
-                        byteArray[i] = binaryString.charCodeAt(i);
-                    }
-
-                    // Create a proper binary File
-                    const newFile = new globalThis.File([byteArray], file.name, { type: file.type });
-
-                    this.selectedObjectService.selectedObject["data"]["data"] = Array.from(Buffer.from(byteArray));
+                    this.selectedObjectService.selectedObject["data"]["data"] = Array.from(new Uint8Array(arrayBuffer));
                     this.selectedObjectService.selectedObject["type"] = newFile.type;
                     this.selectedObjectService.selectedObject["name"] = newFile.name;
 

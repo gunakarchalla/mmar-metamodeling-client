@@ -1,6 +1,7 @@
 import { customElement, inject, EventAggregator, IDisposable } from "aurelia";
 import { SelectedObjectService } from "../../../../resources/services/selected-object";
 import { File } from "../../../../../../mmar-global-data-structure/models/meta/Metamodel_files.structure";
+import { HelperService } from "resources/services/helper-service";
 @customElement("general-tab-file")
 @inject(SelectedObjectService, EventAggregator)
 export class GeneralTabFile {
@@ -10,6 +11,7 @@ export class GeneralTabFile {
     constructor(
         private selectedObjectService: SelectedObjectService,
         private eventAggregator: EventAggregator,
+        private helperService: HelperService,
     ) {
     }
 
@@ -48,8 +50,7 @@ export class GeneralTabFile {
     }
 
     async getImage() {
-        const fileContent = await this.file.arrayBuffer();
-        let base64 = Buffer.from(new Uint8Array(fileContent)).toString('base64');
+        let base64 = await this.helperService.FiletoDataUrl(this.file);
         this.imageString = `data:image/png;base64,${base64}`;
         return;
     }

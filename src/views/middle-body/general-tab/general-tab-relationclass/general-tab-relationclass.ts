@@ -8,7 +8,6 @@ import {
 @inject(SelectedObjectService)
 export class GeneralTabRelationclass {
     constructor(private selectedObjectService: SelectedObjectService) {
-        console.log("selectedObjectService.selectedObject:", this.selectedObjectService.selectedObject);
     }
 
     getImage() {

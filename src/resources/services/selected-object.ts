@@ -100,7 +100,6 @@ export class SelectedObjectService {
         | Attribute | Role | null {
         if (!uuid) return null;
         const type = this.getTypeFromUuid(uuid);
-        console.log(`Getting type from uuid: ${uuid}, type: ${type}`);
         if (!type) return null;
         return this.getObjects(type).find((obj) => obj.uuid === uuid);
     }
@@ -315,8 +314,6 @@ export class SelectedObjectService {
                 return type;
             }
         }
-        console.log("uuid:", uuid);
-        console.log("files:", this.getFiles());
         console.warn(`Unknown type for uuid: ${uuid}`);
         return null;
     }

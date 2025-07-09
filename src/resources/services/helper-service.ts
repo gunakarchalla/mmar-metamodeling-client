@@ -1,5 +1,5 @@
 export class HelperService {
-    async urltoFile(url, filename, mimeType) {
+    async DataUrltoFile(url, filename, mimeType) {
         if (url.startsWith('data:')) {
             var arr = url.split(','),
                 mime = arr[0].match(/:(.*?);/)[1],
@@ -17,20 +17,9 @@ export class HelperService {
             .then(buf => new File([buf], filename, { type: mimeType }));
     }
 
-    buffertoBase64(buffer): Promise<string> {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                if (typeof reader.result === 'string') {
-                    resolve(reader.result);
-                } else {
-                    resolve('');
-                }
-            };
-            reader.onerror = (error) => {
-                reject(error);
-            };
-            reader.readAsDataURL(new Blob([buffer]));
-        });
+    async FiletoDataUrl(file: File): Promise<string> {
+        const fileContent = await file.arrayBuffer();
+        const base64 = Buffer.from(new Uint8Array(fileContent)).toString('base64');
+        return base64;
     }
 }
