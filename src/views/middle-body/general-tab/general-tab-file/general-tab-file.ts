@@ -32,7 +32,9 @@ export class GeneralTabFile {
     }
 
     detaching() {
-        this.subscription.dispose();
+        if (this.subscription) {
+            this.subscription.dispose();
+        }
     }
 
     async getFile() {

@@ -383,3 +383,9 @@ body {
   float: none;
   overflow: hidden;
 }
+
+.image-content {
+  max-width: 50dvh;
+  max-height: 50dvh;
+  object-fit: contain; // ensures the image fits within its container without distortion
+}
