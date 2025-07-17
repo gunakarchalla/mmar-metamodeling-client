@@ -25,6 +25,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
+  height: 7dvh;
 }
 
 .toolbar-container {
@@ -36,10 +37,12 @@ body {
 .main-body-tab-bar {
   flex: 1 0 auto;
   background-color: $background;
+  height: 88dvh;
 }
 
 
 .content-container {
+  height: 82dvh;
   display: flex;
   flex: 1;
 }
@@ -53,6 +56,7 @@ body {
 }
 
 .left-nav {
+  overflow-y: scroll;
   align-self: flex-start;
   padding: 0 10px 0 10px;
   width: 20%;
@@ -151,9 +155,9 @@ body {
 }
 
 .footer {
+  height: 5dvh;
   background-color: $primary;
   flex-shrink: 0;
-  margin-top: 10px;
   position: sticky;
   bottom: 0;
 
@@ -280,12 +284,6 @@ body {
 .solid_hr_list {
   width: 90%;
   margin: 10px auto;
-  color: $primary;
-}
-
-.solid_hr-top {
-  width: 95%;
-  margin-top: 0;
   color: $primary;
 }
 
