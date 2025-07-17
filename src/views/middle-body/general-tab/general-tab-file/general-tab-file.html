@@ -25,6 +25,11 @@
                     </mdc-dialog>
                 </div>
             </div>
+
+            <span class="file-size" if.bind="selectedObject.data && selectedObject.data.data">
+                Size: ${formatFileSize(selectedObject.data.data.length)}
+            </span>
+
         </fieldset>
     </section>
 </template>

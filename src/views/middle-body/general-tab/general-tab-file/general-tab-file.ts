@@ -69,4 +69,16 @@ export class GeneralTabFile {
             URL.revokeObjectURL(url);
         }
     }
+
+    formatFileSize(length: number): string {
+        if (length >= 1073741824) {
+            return (length / 1073741824).toFixed(2) + " GB";
+        } else if (length >= 1048576) {
+            return (length / 1048576).toFixed(2) + " MB";
+        } else if (length >= 1024) {
+            return (length / 1024).toFixed(2) + " KB";
+        } else {
+            return length + " Bytes";
+        }
+    }
 }
