@@ -20,7 +20,7 @@ export class DialogUploadFile {
 
     @observable compress: boolean = false;
     @observable targetWidth: number = 100;
-    @observable quality: number = 0.1;
+    @observable quality: number = 100;
 
     targetWidthError: string = '';
     qualityError: string = '';
@@ -49,18 +49,13 @@ export class DialogUploadFile {
                     const dataURL = reader.result.toString();
                     const newFile = await this.helperService.DataUrltoFile(dataURL, file.name, file.type)
                     const arrayBuffer = await newFile.arrayBuffer();
-                    if (this.compress) {
-                        console.log("Compressing file...");
-                        console.log("Target width:", this.targetWidth);
-                        console.log("Quality:", this.quality);
-                    }
 
                     this.selectedObjectService.selectedObject["data"]["data"] = Array.from(new Uint8Array(arrayBuffer));
                     this.selectedObjectService.selectedObject["type"] = newFile.type;
                     this.selectedObjectService.selectedObject["name"] = newFile.name;
-                    // this.selectedObjectService.selectedObject["compress"] = this.compress;
-                    // this.selectedObjectService.selectedObject["targetWidth"] = this.targetWidth;
-                    // this.selectedObjectService.selectedObject["quality"] = this.quality;
+                    this.selectedObjectService.selectedObject["compress"] = this.compress;
+                    this.selectedObjectService.selectedObject["targetWidth"] = this.targetWidth;
+                    this.selectedObjectService.selectedObject["quality"] = this.quality;
 
                     this.eventAggregator.publish("SelectedObjectChanged", {
                         selectedObject: this.fileDoc,
@@ -76,7 +71,7 @@ export class DialogUploadFile {
         if (this.targetWidth === null || this.targetWidth === undefined || isNaN(Number(this.targetWidth))) {
             this.targetWidthError = 'Target width is required.';
         } else if (Number(this.targetWidth) <= 0) {
-            this.targetWidthError = 'Target width must be a number greater than 0.';
+            this.targetWidthError = 'Must be a number greater than 0.';
         } else {
             this.targetWidthError = '';
         }
@@ -85,8 +80,8 @@ export class DialogUploadFile {
     validateQuality() {
         if (this.quality === null || this.quality === undefined || isNaN(Number(this.quality))) {
             this.qualityError = 'Quality is required.';
-        } else if (Number(this.quality) < 0 || Number(this.quality) > 1) {
-            this.qualityError = 'Quality must be a number between 0 and 1.';
+        } else if (Number(this.quality) <= 0 || Number(this.quality) > 100) {
+            this.qualityError = 'Must be a number between 1 and 100.';
         } else {
             this.qualityError = '';
         }

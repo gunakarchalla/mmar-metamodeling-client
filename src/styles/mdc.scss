@@ -389,3 +389,18 @@ body {
   max-height: 50dvh;
   object-fit: contain; // ensures the image fits within its container without distortion
 }
+
+.error-message {
+  color: red;
+  font-size: 0.9em;
+  margin-left: 0.5em;
+}
+
+.compression-parameters {
+  margin-left: 0.5em;
+  width: 6em;
+}
+
+.compression-parameters-container {
+  margin: 1em;
+}

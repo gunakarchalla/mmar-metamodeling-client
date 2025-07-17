@@ -242,6 +242,11 @@ export class BackendService {
       let url = `metamodel/${type}/${object.uuid}?hardpatch=true`;
       if (type === "users") url = `${type}/${object.uuid}?hardpatch=true`;
       if (type === "userGroups") url = `${type}/${object.uuid}?hardpatch=true`;
+      if (type === "files") {
+        if (object["compress"]) {
+          url = `metamodel/files/${object.uuid}?hardpatch=true&compress=true&targetWidth=${object["targetWidth"]}&quality=${object["quality"]}`;
+        }
+      }
       const response = await this.http.fetch(url, {
         method: "PATCH",
         headers: {
