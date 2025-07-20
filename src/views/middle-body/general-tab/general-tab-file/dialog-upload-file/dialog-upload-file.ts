@@ -39,6 +39,13 @@ export class DialogUploadFile {
         this.uppy.use(Dashboard, { inline: true, target: '#forUpload', showProgressDetails: true, width: '100%', height: '200px', hideUploadButton: true });
     }
 
+    async detaching() {
+        if (this.uppy) {
+            this.uppy.destroy();
+            this.uppy = null;
+        }
+    }
+
     load() {
         const files = this.uppy.getFiles();
         const reader = new FileReader();
