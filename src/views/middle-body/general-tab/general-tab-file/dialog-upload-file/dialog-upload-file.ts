@@ -25,16 +25,17 @@ export class DialogUploadFile {
     targetWidthError: string = '';
     qualityError: string = '';
 
+    private uppy: Uppy;
+
     constructor(
         private selectedObjectService: SelectedObjectService,
         private eventAggregator: EventAggregator,
         private helperService: HelperService,
-        private uppy: Uppy = new Uppy(),
     ) { }
 
     async attached() {
 
-        // Configure Uppy instance
+        this.uppy = new Uppy({});
         this.uppy.use(Dashboard, { inline: true, target: '#forUpload', showProgressDetails: true, width: '100%', height: '200px', hideUploadButton: true });
     }
 
