@@ -1,4 +1,4 @@
-import Uppy from '@uppy/core';
+import Uppy, { UppyFile } from '@uppy/core';
 import Dashboard from '@uppy/dashboard';
 import '@uppy/core/dist/style.min.css';
 import '@uppy/dashboard/dist/style.min.css';
@@ -21,6 +21,7 @@ export class DialogUploadFile {
     @observable compress: boolean = false;
     @observable targetWidth: number = 100;
     @observable quality: number = 100;
+    disableCompress: boolean = true;
 
     targetWidthError: string = '';
     qualityError: string = '';
@@ -35,8 +36,16 @@ export class DialogUploadFile {
 
     async attached() {
 
-        this.uppy = new Uppy({});
+        this.uppy = new Uppy({ restrictions: { maxNumberOfFiles: 1 } });
         this.uppy.use(Dashboard, { inline: true, target: '#forUpload', showProgressDetails: true, width: '100%', height: '200px', hideUploadButton: true });
+        this.uppy.on('file-added', (file) => {
+            console.log("File added:", file);
+            this.validateFile(file);
+        });
+        this.uppy.on('file-removed', (file) => {
+            console.log("File removed:", file);
+            this.disableCompress = true;
+        });
     }
 
     async detaching() {
@@ -46,7 +55,7 @@ export class DialogUploadFile {
         }
     }
 
-    load() {
+    upload() {
         const files = this.uppy.getFiles();
         const reader = new FileReader();
 
@@ -56,6 +65,7 @@ export class DialogUploadFile {
                 reader.onload = async () => {
                     const dataURL = reader.result.toString();
                     const newFile = await this.helperService.DataUrltoFile(dataURL, file.name, file.type)
+
                     const arrayBuffer = await newFile.arrayBuffer();
 
                     this.selectedObjectService.selectedObject["data"]["data"] = Array.from(new Uint8Array(arrayBuffer));
@@ -71,9 +81,21 @@ export class DialogUploadFile {
                     });
                 }
                 this.uppy.removeFile(file.id);
+                this.disableCompress = true; 
             }
         }
     }
+
+    validateFile(file) {
+        const fileType = file.type;
+        console.log("Validating file type:", fileType);
+        if (fileType.startsWith('image/')) {
+            this.disableCompress = false; 
+        } else {
+            this.disableCompress = true;
+        }
+    }
+
 
     validateTargetWidth() {
         if (this.targetWidth === null || this.targetWidth === undefined || isNaN(Number(this.targetWidth))) {
@@ -96,7 +118,7 @@ export class DialogUploadFile {
     }
 
     compressChanged() {
-        // Reset errors and values when toggling compress
+        // Reset errors when toggling compress
         if (!this.compress) {
             this.targetWidthError = '';
             this.qualityError = '';

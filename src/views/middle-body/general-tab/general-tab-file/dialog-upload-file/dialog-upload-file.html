@@ -20,10 +20,10 @@
 </mdc-dialog-content>
 <mdc-dialog-actions>
     <mdc-form-field align-start class="compress-switch-left">
-        <button mdc-switch selected.bind="compress"></button>
-        <label>Compress File</label>
+        <mdc-checkbox checked.two-way ="compress" disabled.bind="disableCompress" ></mdc-checkbox>
+        <label>Compress Image</label>
     </mdc-form-field>
     <div class="div-max-width"></div>
-    <button mdc-button data-mdc-dialog-action="ok" click.trigger="load()"
-        disabled.bind="compress && (targetWidthError || qualityError)">Load</button>
+    <button mdc-button data-mdc-dialog-action="ok" click.trigger="upload()"
+        disabled.bind="compress && (targetWidthError || qualityError)">Upload</button>
 </mdc-dialog-actions>
