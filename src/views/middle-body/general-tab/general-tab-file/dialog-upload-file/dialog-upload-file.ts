@@ -45,6 +45,9 @@ export class DialogUploadFile {
         this.uppy.on('file-removed', (file) => {
             console.log("File removed:", file);
             this.disableCompress = true;
+            this.targetWidthError = '';
+            this.qualityError = '';
+            this.compress = false;
         });
     }
 
@@ -81,7 +84,10 @@ export class DialogUploadFile {
                     });
                 }
                 this.uppy.removeFile(file.id);
-                this.disableCompress = true; 
+                this.disableCompress = true;
+                this.targetWidthError = '';
+                this.qualityError = '';
+                this.compress = false;
             }
         }
     }
@@ -90,7 +96,7 @@ export class DialogUploadFile {
         const fileType = file.type;
         console.log("Validating file type:", fileType);
         if (fileType.startsWith('image/')) {
-            this.disableCompress = false; 
+            this.disableCompress = false;
         } else {
             this.disableCompress = true;
         }
