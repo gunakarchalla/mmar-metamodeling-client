@@ -10,6 +10,7 @@ import { File } from '../../../../../../../mmar-global-data-structure/models/met
 import { HelperService } from 'resources/services/helper-service';
 import { observable } from "aurelia";
 import { isNumberObject } from 'util/types';
+import { BackendService } from 'resources/services/backend-service';
 
 @customElement("dialog-upload-file")
 @inject(SelectedObjectService, EventAggregator)
@@ -32,6 +33,7 @@ export class DialogUploadFile {
         private selectedObjectService: SelectedObjectService,
         private eventAggregator: EventAggregator,
         private helperService: HelperService,
+        private backendService: BackendService,
     ) { }
 
     async attached() {
@@ -78,16 +80,19 @@ export class DialogUploadFile {
                     this.selectedObjectService.selectedObject["targetWidth"] = this.targetWidth;
                     this.selectedObjectService.selectedObject["quality"] = this.quality;
 
-                    this.eventAggregator.publish("SelectedObjectChanged", {
-                        selectedObject: this.fileDoc,
-                        type: 'File',
+                    this.backendService.saveSelectedObject().then(() => {
+                        this.eventAggregator.publish("SelectedObjectChanged", {
+                            selectedObject: this.fileDoc,
+                            type: 'File',
+                        });
+
+                        this.uppy.removeFile(file.id);
+                        this.disableCompress = true;
+                        this.targetWidthError = '';
+                        this.qualityError = '';
+                        this.compress = false;
                     });
                 }
-                this.uppy.removeFile(file.id);
-                this.disableCompress = true;
-                this.targetWidthError = '';
-                this.qualityError = '';
-                this.compress = false;
             }
         }
     }
