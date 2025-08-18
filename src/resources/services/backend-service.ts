@@ -7,6 +7,7 @@ import { AttributeType } from "../../../../mmar-global-data-structure/models/met
 import { Attribute } from "../../../../mmar-global-data-structure/models/meta/Metamodel_attributes.structure";
 import { Relationclass } from "../../../../mmar-global-data-structure/models/meta/Metamodel_relationclasses.structure";
 import { Port } from "../../../../mmar-global-data-structure/models/meta/Metamodel_ports.structure";
+import { File } from "../../../../mmar-global-data-structure/models/meta/Metamodel_files.structure";
 import { Usergroup } from "../../../../mmar-global-data-structure/models/meta/Metamodel_usergroups.structure";
 import { User } from "../../../../mmar-global-data-structure/models/meta/Metamodel_users.structure";
 import { v4 as uuidv4 } from "uuid";
@@ -15,6 +16,8 @@ import { MetaObject } from "../../../../mmar-global-data-structure/models/meta/M
 import { Logger } from "./logger";
 import { UserService } from "./user-service";
 import { Procedure } from "../../../../mmar-global-data-structure";
+import { fileURLToPath } from "url";
+import { HelperService } from "./helper-service";
 
 singleton();
 
@@ -30,6 +33,7 @@ export class BackendService {
     private selectedObjectService: SelectedObjectService,
     private logger: Logger,
     private userService: UserService,
+    private helperService: HelperService,
   ) {
     this.http.configure((config) =>
       config.withBaseUrl(this.baseUrl).withDefaults({
@@ -117,6 +121,46 @@ export class BackendService {
     return this.fetchData<Port>("metamodel/ports", "Port");
   }
 
+  async getFiles(): Promise<File[]> {
+    return this.fetchData<File>("metamodel/files", "File");
+  }
+
+  async getFileByUUID(uuid: string): Promise<globalThis.File> {
+    try {
+      const response = await this.http.fetch(`metamodel/files/${uuid}`);
+      if (!response.ok) {
+        throw new Error(`${response.statusText} - ${await response.json()}`);
+      }
+      const blob = await response.blob();
+      const file = new globalThis.File([blob], uuid, { type: blob.type });
+      return file;
+    } catch (error) {
+      this.logger.log(`Error fetching endpoint: ${error}`, "error");
+    }
+  }
+
+  async patchFileByUUID(uuid: string, file: globalThis.File): Promise<string> {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) return;
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await this.http.fetch(`metamodel/files/${uuid}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error(`${response.statusText} - ${await response.json()}`);
+      }
+      return await response.json();
+    } catch (error) {
+      this.logger.log(`Error patching file: ${error}`, "error");
+    }
+  }
+
   async getProcedures(): Promise<Procedure[]> {
     return this.fetchData<Procedure>("metamodel/procedures", "Procedure");
   }
@@ -136,11 +180,24 @@ export class BackendService {
       type = this.getCorrectType(type);
       const token = localStorage.getItem("auth_token");
       const generatedUuid = uuidv4();
+      const formData = new FormData();
 
       const content = {
         uuid: generatedUuid,
         name: "New " + type,
       };
+
+      if (type === "files") {
+        const placeholderFile = await this.helperService.DataUrltoFile(
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAAXNSR0IArs4c6QAAAHRJREFUGFcBaQCW/wFv8t3/dgt6AEF6ngAia2wA1JssAAEJ6en/UlQcAGqvmQAg5c4AkbeuAAFX1IH/Tn9jANk1ywD72+oAURLsAAHxiZj/HBd7AKuQXgBh1dgAZL+rAAH1ExD/AvgpACqw9wBrxn0AB3TZADviLEbMrYc8AAAAAElFTkSuQmCC",
+          "placeholder.png",
+          "image/png",
+        );
+
+        formData.append("file", placeholderFile);
+        formData.append("uuid", generatedUuid);
+        formData.append("name", "New " + type);
+      }
 
       if (type === "attributes") {
         content["attribute_type"] = {
@@ -164,7 +221,7 @@ export class BackendService {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(content),
+        body: type === "files" ? formData : JSON.stringify(content),
       });
       if (!response.ok) throw new Error(`Failed to create ${type}`);
       const toReturn = await response.json();
@@ -185,6 +242,11 @@ export class BackendService {
       let url = `metamodel/${type}/${object.uuid}?hardpatch=true`;
       if (type === "users") url = `${type}/${object.uuid}?hardpatch=true`;
       if (type === "userGroups") url = `${type}/${object.uuid}?hardpatch=true`;
+      if (type === "files") {
+        if (object["compress"]) {
+          url = `metamodel/files/${object.uuid}?hardpatch=true&compress=true&targetWidth=${object["targetWidth"]}&quality=${object["quality"]}`;
+        }
+      }
       const response = await this.http.fetch(url, {
         method: "PATCH",
         headers: {
@@ -272,7 +334,7 @@ export class BackendService {
         throw new Error(`${response.statusText} - ${await response.json()}`);
       this.selectedObjectService.removeObject(uuid);
 
-      return await response.json();
+      return response;
     } catch (error) {
       this.logger.log(`Error deleting ${type}: ${error}`, "error");
     }
@@ -293,6 +355,8 @@ export class BackendService {
           return this.getAttributes();
         case "Port":
           return this.getPorts();
+        case "File":
+          return this.getFiles();
         case "Procedure":
           return this.getProcedures();
         case "UserGroup":
@@ -327,6 +391,9 @@ export class BackendService {
         break;
       case "Port":
         return "ports";
+        break;
+      case "File":
+        return "files";
         break;
       case "Role":
         return "roles";

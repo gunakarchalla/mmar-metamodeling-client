@@ -1,0 +1,35 @@
+<template>
+    <import from="../../../object-card/object-card"></import>
+    <import from="./dialog-upload-file/dialog-upload-file"></import>
+
+    <section aria-label="Input Form" class="input-group-attribute">
+        <fieldset class="border p-2">
+            <legend class="float-none w-auto p-2 col-form-label">File</legend>
+            <div class="attr-attribute-type">
+                <label>Content: </label>
+
+                <img class="image-content" src.to-view="imageString" alt="File Image" />
+
+                <div class="general-tab-stack">
+                    <button click.trigger="downloadFile()" mdc-button outlined>
+                        <mdc-icon> download</mdc-icon>
+                        Download File
+                    </button>
+
+                    <button click.trigger="dialogUploadFile.open()" mdc-button outlined>
+                        <mdc-icon> publish</mdc-icon>
+                        Replace File
+                    </button>
+                    <mdc-dialog view-model.ref="dialogUploadFile">
+                        <dialog-upload-file file-doc.bind="selectedObject"></dialog-upload-file>
+                    </mdc-dialog>
+                </div>
+            </div>
+
+            <span class="file-size" if.bind="selectedObject.data && selectedObject.data.data">
+                Size: ${formatFileSize(selectedObject.data.data.length)}
+            </span>
+
+        </fieldset>
+    </section>
+</template>

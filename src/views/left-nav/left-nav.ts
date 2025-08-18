@@ -1,7 +1,7 @@
-import {BackendService} from "../../resources/services/backend-service";
-import {EventAggregator, IDisposable, inject, observable} from "aurelia";
-import {SelectedObjectService} from "../../resources/services/selected-object";
-import {UserService} from "../../resources/services/user-service";
+import { BackendService } from "../../resources/services/backend-service";
+import { EventAggregator, IDisposable, inject, observable } from "aurelia";
+import { SelectedObjectService } from "../../resources/services/selected-object";
+import { UserService } from "../../resources/services/user-service";
 
 @inject(SelectedObjectService)
 @inject(EventAggregator)
@@ -13,6 +13,7 @@ export class LeftNav {
     @observable isLoadingPorts = true;
     @observable isLoadingAttributeTypes = true;
     @observable isLoadingAttributes = true;
+    @observable isLoadingFiles = true;
     @observable isLoadingUsergroups = true;
     @observable isLoadingUsers = true;
     @observable isLoadingProcedures = true;
@@ -81,6 +82,12 @@ export class LeftNav {
                 this.isLoadingPorts = false;
                 break;
 
+            case "File":
+                this.isLoadingFiles = true;
+                await this.backendService.getFiles();
+                this.isLoadingFiles = false;
+                break;
+
             case "Procedure":
                 this.isLoadingProcedures = true;
                 await this.backendService.getProcedures();
@@ -108,6 +115,7 @@ export class LeftNav {
                 this.isLoadingPorts = true;
                 this.isLoadingAttributeTypes = true;
                 this.isLoadingAttributes = true;
+                this.isLoadingFiles = true;
                 this.isLoadingProcedures = true;
                 this.isLoadingUsergroups = true;
                 this.isLoadingUsers = true;
@@ -130,6 +138,9 @@ export class LeftNav {
 
                 await this.backendService.getPorts();
                 this.isLoadingPorts = false;
+
+                await this.backendService.getFiles();
+                this.isLoadingFiles = false;
 
                 await this.backendService.getProcedures();
                 this.isLoadingProcedures = false;

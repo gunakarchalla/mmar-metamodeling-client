@@ -1,5 +1,5 @@
-import {customElement, inject} from "aurelia";
-import {SelectedObjectService} from "../../../../resources/services/selected-object";
+import { customElement, inject } from "aurelia";
+import { SelectedObjectService } from "../../../../resources/services/selected-object";
 import {
     Relationclass
 } from "../../../../../../mmar-global-data-structure/models/meta/Metamodel_relationclasses.structure";
