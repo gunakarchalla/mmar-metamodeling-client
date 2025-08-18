@@ -1179,12 +1179,11 @@ export class SelectedObjectService {
     getIcon(wholeVizRep: string): string {
         let vizRep: string = wholeVizRep;
         let map = "";
+        let next = false;
+        let defaultImageBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAQAAAD9CzEMAAAAdElEQVRYw+2SwQ2AIBAEpwC6oSdqoii6oQD8+DHBAOdpNO7sCx7MbgII8SSBRKGQCP6PRzKVtqeSib69WycOW469ezFvOe/tsGXc27xlrffiFlvvhS3NORJIIMFbBLNIIMGfBKN7Ce4XfPcXzZ4luCYQwsoGpwTEXjWPD4EAAAAASUVORK5CYII=";
 
         if (!vizRep) {
             // return a default image in base64
-
-            const defaultImageBase64 =
-                "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAQAAAD9CzEMAAAAdElEQVRYw+2SwQ2AIBAEpwC6oSdqoii6oQD8+DHBAOdpNO7sCx7MbgII8SSBRKGQCP6PRzKVtqeSib69WycOW469ezFvOe/tsGXc27xlrffiFlvvhS3NORJIIMFbBLNIIMGfBKN7Ce4XfPcXzZ4luCYQwsoGpwTEXjWPD4EAAAAASUVORK5CYII=";
             return defaultImageBase64;
         }
 
@@ -1194,8 +1193,16 @@ export class SelectedObjectService {
             const arrStr: string[] = vizRep.split("'");
             for (const substring of arrStr) {
                 const string: string = substring;
-                if (string.startsWith("data")) {
+                if (string.startsWith('data')) {
                     map = string;
+                    return map;
+                }
+                else if (string.endsWith('getImageByUUID(')) {
+                    next = true;
+                } else if (next) {
+                    const str = defaultImageBase64;
+                    map = str;
+                    break;
                 }
             }
         }
