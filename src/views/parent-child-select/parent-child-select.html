@@ -151,18 +151,34 @@
                             ></mdc-text-field>
                         </td>
                         <td if.bind="objecttypetoadd==='Attribute'">
-                            <mdc-text-field
+                            <mdc-select
                                     label="UI Component"
                                     outlined
-                                    value.bind="filteredItems[i].ui_component"
-                            ></mdc-text-field>
+                                    required
+                                    value.bind="filteredItems[i].ui_component | textify"
+                            >
+                                <mdc-list>
+                                        <mdc-list-item value="dropdown">Dropdown</mdc-list-item>
+                                        <mdc-list-item value="text">Text</mdc-list-item>
+                                        <mdc-list-item value="slider">Slider</mdc-list-item>
+                                        <mdc-list-item value="button">Button</mdc-list-item>
+                                </mdc-list>
+                            </mdc-select>
                         </td>
                         <td if.bind="objecttypetoadd==='Column'">
-                            <mdc-text-field
+                            <mdc-select
                                     label="UI Component"
                                     outlined
-                                    value.bind="items[i].ui_component"
-                            ></mdc-text-field>
+                                    required
+                                    value.bind="items[i].ui_component | textify"
+                            >
+                                <mdc-list>
+                                        <mdc-list-item value="dropdown">Dropdown</mdc-list-item>
+                                        <mdc-list-item value="text">Text</mdc-list-item>
+                                        <mdc-list-item value="slider">Slider</mdc-list-item>
+                                        <mdc-list-item value="button">Button</mdc-list-item>
+                                </mdc-list>
+                            </mdc-select>
                         </td>
 
                         <td>
