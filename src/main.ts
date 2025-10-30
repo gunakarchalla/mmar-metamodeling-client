@@ -8,6 +8,7 @@ import {BackendService} from "./resources/services/backend-service";
 import {UserService} from "./resources/services/user-service";
 //import bootstrap from 'bootstrap'
 import * as bootstrap from 'bootstrap'
+import * as value_converters from './resources/services/value_converters';
 
 Aurelia.register(
     bootstrap,
@@ -16,6 +17,7 @@ Aurelia.register(
     EventAggregator,
     BackendService,
     UserService,
+    ...Object.values(value_converters)
 )
     .app(MyApp)
     .start();

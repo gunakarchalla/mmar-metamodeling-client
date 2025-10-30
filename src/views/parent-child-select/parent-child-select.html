@@ -84,7 +84,7 @@
                   <mdc-icon> arrow_downward </mdc-icon>
                 </span>
                         </th>
-                        <th if.bind="objecttypetoadd == 'Attribute'">UI Component</th>
+                        <th if.bind="objecttypetoadd == 'Attribute' || 'Column'">UI Component</th>
                         <th if.bind="objecttypetoadd=='Source' || objecttypetoadd==='Destination' || objecttypetoadd==='Role'"
                             numeric>
                             Min
@@ -99,17 +99,17 @@
 
                     <tbody>
                     <tr
-                            class.bind="item.uuid === selected ? 'selected' : ''"
-                            click.trigger="selectObject(item.uuid)"
+                            class.bind="filteredItems[i].uuid === selected ? 'selected' : ''"
+                            click.trigger="selectObject(filteredItems[i].uuid)"
                             mdc-data-table-row
-                            repeat.for="item of filteredItems"
+                            repeat.for="i of filteredItems.length"
                     >
                         <td class="action-buttons" if.bind="!sortable">
-                            <div class="move-buttons" show.bind="item.uuid === selected">
-                                <button click.trigger="moveRow(item.uuid, 'up')" mdc-button>
+                            <div class="move-buttons" show.bind="filteredItems[i].uuid === selected">
+                                <button click.trigger="moveRow(filteredItems[i].uuid, 'up')" mdc-button>
                                     <mdc-icon> arrow_upward</mdc-icon>
                                 </button>
-                                <button click.trigger="moveRow(item.uuid, 'down')" mdc-button>
+                                <button click.trigger="moveRow(filteredItems[i].uuid, 'down')" mdc-button>
                                     <mdc-icon> arrow_downward</mdc-icon>
                                 </button>
                             </div>
@@ -117,51 +117,72 @@
 
                         <td>
                             <img
-                                    alt="image of ${item.name}"
+                                    alt="image of ${filteredItems[i].name}"
                                     class="image-list"
-                                    src.bind="selectedObjectService.getIcon(item.geometry.toString())"
+                                    src.bind="selectedObjectService.getIcon(filteredItems[i].geometry.toString())"
                             />
                         </td>
                         <td if.bind="objecttypetoadd=='Source' || objecttypetoadd==='Destination' || objecttypetoadd==='Role'"
                         >
-                            ${selectedObjectService.getTypeFromUuid(item.uuid)}
+                            ${selectedObjectService.getTypeFromUuid(filteredItems[i].uuid)}
                         </td>
-                        <td>${item.name}</td>
-                        <td>${item.description}</td>
+                        <td>${filteredItems[i].name}</td>
+                        <td>${filteredItems[i].description}</td>
                         <td if.bind="objecttypetoadd==='Source' || objecttypetoadd==='Destination' || objecttypetoadd==='Role'">
                             <mdc-text-field
-                                    change.trigger="validateMinMax(item.uuid, item.min, item.max)"
+                                    change.trigger="validateMinMax(filteredItems[i].uuid, filteredItems[i].min, filteredItems[i].max)"
                                     label="Min"
                                     min="0"
                                     outlined
                                     step="1"
                                     type="number"
-                                    value.bind="item.min"
+                                    value.bind="filteredItems[i].min"
                             ></mdc-text-field>
                         </td>
                         <td if.bind="objecttypetoadd==='Source' || objecttypetoadd==='Destination' || objecttypetoadd==='Role'">
                             <mdc-text-field
-                                    change.trigger="validateMinMax(item.uuid, item.min, item.max)"
+                                    change.trigger="validateMinMax(filteredItems[i].uuid, filteredItems[i].min, filteredItems[i].max)"
                                     label="Max"
-                                    min="item.min"
+                                    min="filteredItems[i].min"
                                     outlined
                                     step="1"
                                     type="number"
-                                    value.bind="item.max"
+                                    value.bind="filteredItems[i].max"
                             ></mdc-text-field>
                         </td>
                         <td if.bind="objecttypetoadd==='Attribute'">
-                            <mdc-text-field
+                            <mdc-select
                                     label="UI Component"
                                     outlined
-                                    value.bind="item.ui_component"
-                            ></mdc-text-field>
+                                    required
+                                    value.bind="filteredItems[i].ui_component | textify"
+                            >
+                                <mdc-list>
+                                        <mdc-list-item value="dropdown">Dropdown</mdc-list-item>
+                                        <mdc-list-item value="text">Text</mdc-list-item>
+                                        <mdc-list-item value="slider">Slider</mdc-list-item>
+                                        <mdc-list-item value="button">Button</mdc-list-item>
+                                </mdc-list>
+                            </mdc-select>
+                        </td>
+                        <td if.bind="objecttypetoadd==='Column'">
+                            <mdc-select
+                                    label="UI Component"
+                                    outlined
+                                    required
+                                    value.bind="items[i].ui_component | textify"
+                            >
+                                <mdc-list>
+                                        <mdc-list-item value="dropdown">Dropdown</mdc-list-item>
+                                        <mdc-list-item value="text">Text</mdc-list-item>
+                                        <mdc-list-item value="slider">Slider</mdc-list-item>
+                                        <mdc-list-item value="button">Button</mdc-list-item>
+                                </mdc-list>
+                            </mdc-select>
                         </td>
 
                         <td>
-                            <button click.trigger="removeObject(item.uuid)" mdc-button>
-                                <mdc-icon> delete</mdc-icon>
-                            </button>
+                            <button click.trigger="removeObject(filteredItems[i].uuid)" mdc-button><mdc-icon> delete</mdc-icon></button>
                         </td>
                     </tr>
                     </tbody>
