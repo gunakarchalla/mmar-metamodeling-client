@@ -327,7 +327,7 @@ export class BackendService {
       if (!token) return;
       let url = `metamodel/${type}/${uuid}`;
       if (type === "userGroups") url = `${type}/${uuid}`;
-      if (type === "users") url = `${type}/uuid/${uuid}`;
+      if (type === "users") url = `${type}/${uuid}`;
       const response = await this.http.fetch(url, {
         method: "DELETE",
         headers: {
