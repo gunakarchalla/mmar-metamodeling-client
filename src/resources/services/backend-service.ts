@@ -182,7 +182,7 @@ export class BackendService {
       const generatedUuid = uuidv4();
       const formData = new FormData();
 
-      const content = {
+      let content: any = {
         uuid: generatedUuid,
         name: "New " + type,
       };
@@ -216,6 +216,10 @@ export class BackendService {
 
       let url = `metamodel/${type}/${generatedUuid}`;
       if (type === "userGroups") url = `${type}/${generatedUuid}`;
+      if (type === "users") {
+        url = `login/signup`;
+        content = { "username": "newuser", "password": "newuser" };
+      }
       const response = await this.http.fetch(url, {
         method: "POST",
         headers: {
