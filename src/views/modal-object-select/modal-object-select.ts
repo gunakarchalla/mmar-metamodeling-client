@@ -38,7 +38,11 @@ export class ModalObjectSelect {
     if (
       this.objecttype === "Source" ||
       this.objecttype === "Destination" ||
-      this.objecttype === "Role"
+      this.objecttype === "Role" ||
+      this.objecttype === "read_right" ||
+      this.objecttype === "write_right" ||
+      this.objecttype === "delete_right" ||
+      this.objecttype === "can_create_instance"
     ) {
       this.items = this.selectedObjectService.getObjects("All");
     } else if (this.objecttype === "Column") {
@@ -96,9 +100,10 @@ export class ModalObjectSelect {
         (item) => item.uuid !== objectUuid,
       );
     } else {
-      this.selecteditems.push(
-        this.items.find((item) => item.uuid === objectUuid),
-      );
+      const selectedItem = this.items.find((item) => item.uuid === objectUuid);
+      if (selectedItem) {
+        this.selecteditems.push(selectedItem);
+      }
     }
     this.addVisualSelectClass(objectUuid);
   }
@@ -106,6 +111,9 @@ export class ModalObjectSelect {
   addVisualSelectClass(uuid?: string) {
     if (uuid) {
       const row = document.getElementById(`${uuid}_${this.objecttype}`);
+      if (!row) {
+        return;
+      }
       if (this.isSelected(uuid)) {
         row.classList.add("selected");
       } else {
@@ -115,6 +123,9 @@ export class ModalObjectSelect {
       //deselect everything
       for (const item of this.items) {
         const row = document.getElementById(`${item.uuid}_${this.objecttype}`);
+        if (!row) {
+          continue;
+        }
         if (this.isSelected(item.uuid)) {
           row.classList.add("selected");
         } else {

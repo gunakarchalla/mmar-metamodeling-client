@@ -23,8 +23,7 @@
                     <thead>
                     <tr>
                         <th>Image</th>
-                        <th click.trigger="sortList('type')"
-                            if.bind="objecttype==='Source' || objecttype==='Destination' || objecttype==='Role'">
+                        <th click.trigger="sortList('type')" if.bind="objecttype==='Source' || objecttype==='Destination' || objecttype==='Role' || objecttype==='read_right' || objecttype==='write_right' || objecttype==='delete_right' || objecttype==='can_create_instance'">
                             Type
                             <span if.bind="currentSort.column === 'type' && currentSort.direction === 'asc'">
                                     <mdc-icon> arrow_upward </mdc-icon>
@@ -61,7 +60,7 @@
                             <img alt="image of ${item.name}" class="image-list"
                                  src.bind="selectedObjectService.getIcon(item.geometry.toString())"/>
                         </td>
-                        <td>${selectedObjectService.getTypeFromUuid(item.uuid)}</td>
+                        <td if.bind="objecttype==='Source' || objecttype==='Destination' || objecttype==='Role' || objecttype==='read_right' || objecttype==='write_right' || objecttype==='delete_right' || objecttype==='can_create_instance'">${selectedObjectService.getTypeFromUuid(item.uuid)}</td>
                         <td>${item.name}</td>
                         <td>${item.description}</td>
                     </tr>

@@ -379,6 +379,18 @@ export class SelectedObjectService {
             case "Procedure":
                 this.selectedObjectRemoveProcedure(uuid);
                 break;
+            case "read_right":
+                this.selectedObjectRemoveReadRight(uuid);
+                break;
+            case "write_right":
+                this.selectedObjectRemoveWriteRight(uuid);
+                break;
+            case "delete_right":
+                this.selectedObjectRemoveDeleteRight(uuid);
+                break;
+            case "can_create_instance":
+                this.selectedObjectRemoveCanCreateInstance(uuid);
+                break;
 
             //todo: add user
             default:
@@ -392,6 +404,34 @@ export class SelectedObjectService {
     selectedObjectRemoveUserGroup(UserGroupUuid) {
         this.selectedObject = User.fromJS(this.selectedObject) as User;
         this.selectedObject.remove_has_user_group_by_uuid(UserGroupUuid);
+    }
+
+    selectedObjectRemoveReadRight(uuid: UUID) {
+        this.selectedObject = this.selectedObject as Usergroup;
+        this.selectedObject.read_right = (this.selectedObject.read_right || []).filter(
+            (rightUuid) => rightUuid !== uuid,
+        );
+    }
+
+    selectedObjectRemoveWriteRight(uuid: UUID) {
+        this.selectedObject = this.selectedObject as Usergroup;
+        this.selectedObject.write_right = (this.selectedObject.write_right || []).filter(
+            (rightUuid) => rightUuid !== uuid,
+        );
+    }
+
+    selectedObjectRemoveDeleteRight(uuid: UUID) {
+        this.selectedObject = this.selectedObject as Usergroup;
+        this.selectedObject.delete_right = (this.selectedObject.delete_right || []).filter(
+            (rightUuid) => rightUuid !== uuid,
+        );
+    }
+
+    selectedObjectRemoveCanCreateInstance(uuid: UUID) {
+        this.selectedObject = this.selectedObject as Usergroup;
+        this.selectedObject.can_create_instance = (this.selectedObject.can_create_instance || []).filter(
+            (rightUuid) => rightUuid !== uuid,
+        );
     }
 
     selectedObjectRemoveReferenceRole(uuid: UUID) {
@@ -637,6 +677,18 @@ export class SelectedObjectService {
             case "Procedure":
                 this.selectedObjectAddProcedure(uuid);
                 break;
+            case "read_right":
+                this.selectedObjectAddReadRight(uuid);
+                break;
+            case "write_right":
+                this.selectedObjectAddWriteRight(uuid);
+                break;
+            case "delete_right":
+                this.selectedObjectAddDeleteRight(uuid);
+                break;
+            case "can_create_instance":
+                this.selectedObjectAddCanCreateInstance(uuid);
+                break;
             default:
                 console.warn(`Unknown type: ${type}`);
         }
@@ -652,6 +704,38 @@ export class SelectedObjectService {
         }
         this.selectedObject.add_has_user_group(usrgrp);
 
+    }
+
+    selectedObjectAddReadRight(uuid: UUID) {
+        this.selectedObject = this.selectedObject as Usergroup;
+        if (!this.selectedObject.read_right) {
+            this.selectedObject.read_right = [];
+        }
+        this.selectedObject.read_right.push(uuid);
+    }
+
+    selectedObjectAddWriteRight(uuid: UUID) {
+        this.selectedObject = this.selectedObject as Usergroup;
+        if (!this.selectedObject.write_right) {
+            this.selectedObject.write_right = [];
+        }
+        this.selectedObject.write_right.push(uuid);
+    }
+
+    selectedObjectAddDeleteRight(uuid: UUID) {
+        this.selectedObject = this.selectedObject as Usergroup;
+        if (!this.selectedObject.delete_right) {
+            this.selectedObject.delete_right = [];
+        }
+        this.selectedObject.delete_right.push(uuid);
+    }
+
+    selectedObjectAddCanCreateInstance(uuid: UUID) {
+        this.selectedObject = this.selectedObject as Usergroup;
+        if (!this.selectedObject.can_create_instance) {
+            this.selectedObject.can_create_instance = [];
+        }
+        this.selectedObject.can_create_instance.push(uuid);
     }
 
     selectedObjectAddProcedure(uuid: UUID) {
@@ -1082,11 +1166,13 @@ export class SelectedObjectService {
                     toReturn = toReturn.concat(this.getSceneTypes());
                     toReturn = toReturn.concat(this.getClasses());
                     toReturn = toReturn.concat(this.getRelationClasses());
-                    //toReturn = toReturn.concat(this.getAttributeTypes());
+                    toReturn = toReturn.concat(this.getAttributeTypes());
                     toReturn = toReturn.concat(this.getAttributes());
                     toReturn = toReturn.concat(this.getPorts());
                     toReturn = toReturn.concat(this.getFiles());
                     toReturn = toReturn.concat(this.getProcedures());
+                    toReturn = toReturn.concat(this.getUsers());
+                    toReturn = toReturn.concat(this.getUserGroups());
                     return toReturn;
                 default:
                     console.warn(`Unknown type: ${type}`);

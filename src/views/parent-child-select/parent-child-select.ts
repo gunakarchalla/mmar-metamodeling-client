@@ -31,6 +31,15 @@ export class ParentChildSelect {
     private logger: Logger,
   ) {}
 
+  isRightType() {
+    return (
+      this.objecttypetoadd === "read_right" ||
+      this.objecttypetoadd === "write_right" ||
+      this.objecttypetoadd === "delete_right" ||
+      this.objecttypetoadd === "can_create_instance"
+    );
+  }
+
   attached() {
     this.initializeItems();
   }
@@ -85,15 +94,33 @@ export class ParentChildSelect {
         this.computedItems.push(newObject.get_attribute());
       }
       this.filteredItems = this.computedItems;
+    } else if (this.isRightType()) {
+      if (!this.items) {
+        this.items = [];
+      }
+      if (!Array.isArray(this.items)) this.items = [this.items];
+
+      for (const item of this.items) {
+        const objectUuid = typeof item === "string" ? item : item.uuid;
+        const object = this.selectedObjectService.getObjectFromUuid(objectUuid);
+        if (object) {
+          // shallow copy keeps table behavior without mutating source objects
+          this.computedItems.push({ ...object });
+        }
+      }
+
+      this.filteredItems = this.computedItems;
     } else {
-      this.filteredItems = this.items;
+      this.filteredItems = this.items || [];
     }
   }
 
   filterItems() {
+    const sourceItems =
+      this.computedItems.length > 0 ? this.computedItems : this.items || [];
     if (this.searchTerm) {
       const searchTermLower = this.searchTerm.toLowerCase();
-      this.filteredItems = this.items.filter((item) => {
+      this.filteredItems = sourceItems.filter((item) => {
         // filter on name and description
         if (item.description) {
           return (
@@ -106,7 +133,7 @@ export class ParentChildSelect {
       });
     } else {
       // If no search term, display all items
-      this.filteredItems = this.items;
+      this.filteredItems = sourceItems;
     }
   }
 
@@ -159,7 +186,10 @@ export class ParentChildSelect {
         this.currentSort.direction = "asc";
       }
 
-      this.items.sort((a, b) => {
+      const sourceItems =
+        this.computedItems.length > 0 ? this.computedItems : this.items || [];
+
+      sourceItems.sort((a, b) => {
         let result = 0;
         if (a[column] < b[column]) result = -1;
         if (a[column] > b[column]) result = 1;
