@@ -84,7 +84,7 @@ export class UserService {
             if (!response.ok) return false;
             const data = await response.json();
             // Save the token for future requests, for example:
-            localStorage.setItem("auth_token", data);
+            localStorage.setItem("auth_token", data.token);
             return true;
         } catch (error) {
             console.error("There was an error signing up:", error);
