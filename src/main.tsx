@@ -4,10 +4,17 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import App from "./App";
+// Load-bearing side-effect import: this module subscribes to the `login` channel
+// and empties the stores on sign-out, so the next user cannot inherit the
+// previous one's metamodel, editor tabs or log. It is imported for that
+// subscription alone — nothing here references it, and dropping the import
+// silently disables the teardown.
+import "@/resources/services/session-reset";
 
-// Palette tuned to the original styles/color_definition.scss
-// ($primary #9ec8e1, $primary-light #BDD9EB, $secondary #ff8a65, $error #ff4747,
-//  $enableGreen #4CAF50/#388E3C, $disableRed #F44336/#D32F2F).
+/**
+ * The application theme: the MMAR palette, plus the handful of component
+ * defaults the layout depends on.
+ */
 const theme = createTheme({
   palette: {
     mode: "light",
@@ -18,12 +25,41 @@ const theme = createTheme({
     background: { default: "#ffffff" },
   },
   components: {
-    // Tooltips with arrows mirror the MDC tooltip look used throughout the
-    // original; buttons keep mixed-case labels (MUI defaults to UPPERCASE).
-    MuiTooltip: { defaultProps: { arrow: true } },
-    // All buttons render black regardless of variant/color. The per-variant
-    // overrides win over MUI's internal color styles, so even buttons that
-    // pass color="inherit"/"primary" end up black.
+    // The shell is exactly one viewport tall and every scrollable region — the
+    // left navigation, the editor, the log — scrolls inside itself, so the
+    // document itself must never scroll. Without this, anything sticking out
+    // past the viewport grows the document and flashes an app-wide scrollbar.
+    // Tooltips are the usual culprit: they are portalled into <body>, and once
+    // positioned they switch to an absolute, transformed box, which does count
+    // towards document overflow. Flicking through a long list opens and moves
+    // those tooltips under the cursor, so the flash repeats for as long as the
+    // flick lasts.
+    MuiCssBaseline: {
+      styleOverrides: {
+        "html, body, #root": { height: "100%" },
+        "html, body": { overflow: "hidden" },
+      },
+    },
+    // `preventOverflow.altAxis` keeps a tooltip inside the viewport on its cross
+    // axis too — only the main axis is guarded by default, so the left- and
+    // right-placed tooltips of the log entries and navigation rows would hang
+    // past the top or bottom edge and be clipped by the rule above.
+    MuiTooltip: {
+      defaultProps: {
+        arrow: true,
+        slotProps: {
+          popper: {
+            popperOptions: {
+              modifiers: [
+                { name: "preventOverflow", options: { altAxis: true, padding: 8 } },
+              ],
+            },
+          },
+        },
+      },
+    },
+    // Buttons render black whatever variant or colour they ask for: these
+    // per-variant overrides outrank MUI's own colour styles.
     MuiButton: {
       styleOverrides: {
         root: { textTransform: "none" },

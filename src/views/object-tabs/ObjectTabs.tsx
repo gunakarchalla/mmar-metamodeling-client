@@ -17,19 +17,19 @@ import { useSelectedObjectStore, OpenTab } from "@/resources/store/selectedObjec
 import { useUiStore } from "@/resources/store/uiStore";
 import { backendService } from "@/resources/services/backend-service";
 
-// The VS-Code-style strip of open objects above the middle body. Every object
-// you click in the left nav opens (or focuses) a tab here; each tab keeps its
-// own working copy, so unsaved edits survive switching between them.
-//
-// A tab with unsaved edits shows a filled circle where the close button is —
-// and, like VS Code, the circle turns into the ✕ while you hover it. Closing a
-// dirty tab asks first; dismissing that dialog leaves the tab open and untouched.
+/**
+ * The strip of open objects above the editor.
+ *
+ * Clicking an object in the left navigation opens a tab here, or focuses the one
+ * it is already open in. Each tab keeps its own working copy, so unsaved edits
+ * survive switching between them — which is why closing a tab with edits asks
+ * first, and why dismissing that question leaves the tab exactly as it was.
+ *
+ * A tab with unsaved edits shows a filled dot where its close button goes; the
+ * dot turns back into the ✕ while the pointer is over it.
+ */
 
-// `name` lives on every concrete SelectableObject but not on the union, and the
-// store holds raw JSON rather than gds instances (see the guide's type-dispatch
-// section) — so it is read the same way the rest of the app reads it.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const nameOf = (tab: OpenTab | null) => (tab?.object as any)?.name as string | undefined;
+const nameOf = (tab: OpenTab | null) => tab?.object?.name;
 
 export default function ObjectTabs() {
   const openTabs = useSelectedObjectStore((s) => s.openTabs);
@@ -57,7 +57,17 @@ export default function ObjectTabs() {
     if (!pendingClose) return;
     setSaving(true);
     try {
-      await backendService.saveObject(pendingClose.object, pendingClose.type);
+      const saved = await backendService.saveObject(pendingClose.object, pendingClose.type);
+      // A save can be refused — by the metamodel rules the client checks before sending,
+      // or by the server — and `saveObject` answers with nothing when it was. Closing
+      // anyway would throw the edits away on the one path that exists to keep them. The
+      // dialog goes, since the field to fix is behind it and the refusal is already on
+      // screen as the error snackbar; the tab stays open and stays dirty.
+      if (!saved) {
+        activateTab(pendingClose.uuid);
+        setPendingClose(null);
+        return;
+      }
       closeTab(pendingClose.uuid);
       setPendingClose(null);
       triggerRefresh();
@@ -115,8 +125,8 @@ export default function ObjectTabs() {
                     aria-label={`close ${nameOf(tab) ?? tab.uuid}`}
                     onMouseEnter={() => setHoveredClose(tab.uuid)}
                     onMouseLeave={() => setHoveredClose(null)}
-                    // The close affordance sits inside the Tab's label, so stop
-                    // the click before the Tab turns it into a selection change.
+                    // This sits inside the tab's own label, so the click has to
+                    // be stopped before the tab reads it as "focus me".
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -149,8 +159,8 @@ export default function ObjectTabs() {
         ))}
       </Tabs>
 
-      {/* Dismissing this dialog (Esc / backdrop) deliberately does nothing —
-          the tab stays open with its changes intact. */}
+      {/* Dismissing this (Escape, or a click outside) deliberately does
+          nothing: the tab stays open with its changes intact. */}
       <Dialog open={pendingClose !== null} onClose={() => setPendingClose(null)}>
         <DialogTitle>Unsaved changes</DialogTitle>
         <DialogContent>

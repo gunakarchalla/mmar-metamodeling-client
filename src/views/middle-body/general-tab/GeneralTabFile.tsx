@@ -1,94 +1,107 @@
-import { useEffect, useState } from "react";
-import { Box, Typography, Stack, Button } from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
+import { Typography, Stack, Button, Box } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import PublishIcon from "@mui/icons-material/Publish";
 import { useSelectedObjectStore } from "@/resources/store/selectedObjectStore";
-import { File as MetaFile } from "@gds/models/meta/Metamodel_files.structure";
-import { HelperService } from "@/resources/services/helper-service";
+import { fileToBase64 } from "@/resources/services/helper-service";
+import FieldsetSection from "@/views/common/FieldsetSection";
 import DialogUploadFile from "./general-tab-file/DialogUploadFile";
 
-const helperService = new HelperService();
+/**
+ * File-only fields: a preview of the stored bytes, their size, and the buttons
+ * to download them or replace them with a new upload.
+ */
 
-// Ports general-tab-file.{ts,html}: shows the file content as an image preview,
-// a Download button, the file size, and a Replace-File button that opens the
-// DialogUploadFile upload flow.
+/** How a file object carries its bytes: a serialised Node Buffer. */
+interface StoredFile {
+  name?: string;
+  type?: string;
+  data?: { data?: number[] };
+}
+
+function formatFileSize(bytes: number): string {
+  const units = [
+    { limit: 1024 ** 3, suffix: "GB" },
+    { limit: 1024 ** 2, suffix: "MB" },
+    { limit: 1024, suffix: "KB" },
+  ];
+  const unit = units.find((u) => bytes >= u.limit);
+  return unit ? `${(bytes / unit.limit).toFixed(2)} ${unit.suffix}` : `${bytes} Bytes`;
+}
+
 export default function GeneralTabFile() {
-  const obj = useSelectedObjectStore((s) => s.selectedObject);
-  const [imageString, setImageString] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const object = useSelectedObjectStore((s) => s.selectedObject);
+  // The data URL is kept together with the File it was read from, so a preview
+  // left over from a previous selection can be recognised and ignored rather
+  // than having to be cleared by writing state.
+  const [preview, setPreview] = useState<{ source: File | null; url: string }>({
+    source: null,
+    url: "",
+  });
   const [uploadOpen, setUploadOpen] = useState(false);
 
-  // getFile() + getImage(): rebuild a browser File from the byte data and turn it
-  // into a data-url for preview.
+  const stored = object as StoredFile | null | undefined;
+  const bytes = stored?.data?.data;
+
+  // Rebuild a browser File from the stored bytes. Derived rather than held in
+  // state: it is a pure function of the selected object, so nothing needs to
+  // write it back on every selection change.
+  const file = useMemo(
+    () =>
+      bytes
+        ? new File([new Uint8Array(bytes)], stored?.name ?? "file", {
+            type: stored?.type,
+          })
+        : null,
+    [bytes, stored?.name, stored?.type],
+  );
+
+  // Empty while there is no file, and while the current one is still being
+  // read. Both cases used to be handled by clearing `preview` from the effect
+  // body, which is the cascading-render pattern `react-hooks/set-state-in-effect`
+  // reports; deriving them leaves the effect writing state only from the
+  // asynchronous read's callback.
+  const previewUrl = preview.source === file ? preview.url : "";
+
+  // Read the bytes into a data URL to display.
   useEffect(() => {
+    if (!file) return;
+
     let cancelled = false;
-    async function load() {
-      if (!obj) {
-        setFile(null);
-        setImageString("");
-        return;
+    void fileToBase64(file).then((base64) => {
+      if (!cancelled) {
+        setPreview({ source: file, url: `data:image/png;base64,${base64}` });
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const o = obj as any;
-      const fileData = o?.data?.data;
-      if (!fileData) {
-        setFile(null);
-        setImageString("");
-        return;
-      }
-      const mimeType = o.type;
-      const blob = new Blob([new Uint8Array(fileData)], { type: mimeType });
-      const f = new File([blob], obj.name ?? "file", { type: mimeType });
-      if (cancelled) return;
-      setFile(f);
-      const base64 = await helperService.FiletoDataUrl(f);
-      if (!cancelled) setImageString(`data:image/png;base64,${base64}`);
-    }
-    load();
+    });
+
     return () => {
       cancelled = true;
     };
-  }, [obj?.uuid, obj]);
+  }, [file]);
 
-  if (!obj) return null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const o = obj as MetaFile & { data?: any };
+  if (!object) return null;
 
   function downloadFile() {
     if (!file) return;
     const url = URL.createObjectURL(file);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = file.name || "download";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = file.name || "download";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   }
 
-  function formatFileSize(length: number): string {
-    if (length >= 1073741824) return (length / 1073741824).toFixed(2) + " GB";
-    if (length >= 1048576) return (length / 1048576).toFixed(2) + " MB";
-    if (length >= 1024) return (length / 1024).toFixed(2) + " KB";
-    return length + " Bytes";
-  }
-
   return (
-    <Box
-      component="section"
-      sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, p: 1.5, mt: 2 }}
-    >
-      <Typography component="legend" variant="caption" color="text.secondary">
-        File
-      </Typography>
-
-      <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 1 }}>
+    <FieldsetSection legend="File">
+      <Stack direction="row" spacing={2} sx={{ alignItems: "center", mt: 1 }}>
         <Typography>Content:</Typography>
-        {imageString && (
+        {previewUrl && (
           <Box
             component="img"
             className="image-content"
-            src={imageString}
+            src={previewUrl}
             alt="File Image"
             sx={{ maxWidth: 120, maxHeight: 120, objectFit: "contain" }}
           />
@@ -113,13 +126,13 @@ export default function GeneralTabFile() {
         </Stack>
       </Stack>
 
-      {o.data && o.data.data && (
+      {bytes && (
         <Typography className="file-size" variant="caption" color="text.secondary">
-          Size: {formatFileSize(o.data.data.length)}
+          Size: {formatFileSize(bytes.length)}
         </Typography>
       )}
 
       <DialogUploadFile open={uploadOpen} onClose={() => setUploadOpen(false)} />
-    </Box>
+    </FieldsetSection>
   );
 }

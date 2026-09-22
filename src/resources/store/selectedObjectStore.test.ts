@@ -2,30 +2,11 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { selectCanRedo, selectCanUndo, useSelectedObjectStore } from "./selectedObjectStore";
 import { SceneType } from "@gds/models/meta/Metamodel_scenetypes.structure";
 import { Class } from "@gds/models/meta/Metamodel_classes.structure";
+import { AttributeType } from "@gds/models/meta/Metamodel_attributetypes.structure";
+import { Attribute } from "@gds/models/meta/Metamodel_attributes.structure";
 import { useEditorStore } from "./editorStore";
 
 const reset = () => useSelectedObjectStore.getState().resetObjects();
-
-describe("selectedObjectStore.getIcon", () => {
-  beforeEach(reset);
-
-  it("returns the default png data-url when vizRep is empty", () => {
-    const icon = useSelectedObjectStore.getState().getIcon("");
-    expect(icon.startsWith("data:image/png;base64,")).toBe(true);
-  });
-
-  it("extracts the data-url defined after 'let icon'", () => {
-    const vizRep = "function r(){ let icon = 'data:image/png;base64,ABC123'; }";
-    const icon = useSelectedObjectStore.getState().getIcon(vizRep);
-    expect(icon).toBe("data:image/png;base64,ABC123");
-  });
-
-  it("falls back to a data-url defined after 'let map' when no icon", () => {
-    const vizRep = "function r(){ let map = 'data:image/png;base64,MAPDATA'; }";
-    const icon = useSelectedObjectStore.getState().getIcon(vizRep);
-    expect(icon).toBe("data:image/png;base64,MAPDATA");
-  });
-});
 
 describe("selectedObjectStore.getTypeFromUuid round-trip", () => {
   beforeEach(reset);
@@ -33,7 +14,7 @@ describe("selectedObjectStore.getTypeFromUuid round-trip", () => {
   it("resolves the type for a uuid present in a collection", () => {
     const store = useSelectedObjectStore.getState();
     const st = SceneType.fromJS({ uuid: "abc-123", name: "Test" }) as SceneType;
-    store.setSceneTypes([st]);
+    store.setObjects([st], "SceneType");
     expect(store.getTypeFromUuid("abc-123")).toBe("SceneType");
     expect(store.getObjectFromUuid("abc-123")).toBe(st);
   });
@@ -43,16 +24,63 @@ describe("selectedObjectStore.getTypeFromUuid round-trip", () => {
   });
 });
 
+/**
+ * `getTypeFromUuid` answers from a uuid → type index rather than by scanning
+ * every collection, and that index is invalidated by comparing collection array
+ * *identities*. That is sound only because every write replaces its collection
+ * wholesale — so these cover each write path that has to invalidate it. A stale
+ * index is not a slow answer, it is a wrong one.
+ */
+describe("selectedObjectStore.getTypeFromUuid stays in step with the collections", () => {
+  const store = () => useSelectedObjectStore.getState();
+  beforeEach(reset);
+
+  it("sees objects added after the first lookup", () => {
+    store().setObjects([SceneType.fromJS({ uuid: "st-1", name: "One" }) as SceneType], "SceneType");
+    expect(store().getTypeFromUuid("st-1")).toBe("SceneType");
+
+    // The first lookup has now built and cached an index that knows nothing of this.
+    store().addObject([new Class("cl-1", "A", "" as never, null as never)], "Class");
+    expect(store().getTypeFromUuid("cl-1")).toBe("Class");
+    expect(store().getTypeFromUuid("st-1")).toBe("SceneType");
+  });
+
+  it("forgets an object that was removed", () => {
+    store().setObjects([SceneType.fromJS({ uuid: "st-1", name: "One" }) as SceneType], "SceneType");
+    expect(store().getTypeFromUuid("st-1")).toBe("SceneType");
+
+    store().removeObject("st-1");
+    expect(store().getTypeFromUuid("st-1")).toBeNull();
+  });
+
+  it("forgets everything after a full reset", () => {
+    store().setObjects([SceneType.fromJS({ uuid: "st-1", name: "One" }) as SceneType], "SceneType");
+    expect(store().getTypeFromUuid("st-1")).toBe("SceneType");
+
+    reset();
+    expect(store().getTypeFromUuid("st-1")).toBeNull();
+  });
+
+  it("follows a collection that was replaced wholesale", () => {
+    store().setObjects([SceneType.fromJS({ uuid: "st-1", name: "One" }) as SceneType], "SceneType");
+    expect(store().getTypeFromUuid("st-1")).toBe("SceneType");
+
+    store().setObjects([SceneType.fromJS({ uuid: "st-2", name: "Two" }) as SceneType], "SceneType");
+    expect(store().getTypeFromUuid("st-1")).toBeNull();
+    expect(store().getTypeFromUuid("st-2")).toBe("SceneType");
+  });
+});
+
 describe("selectedObjectStore open tabs", () => {
   const store = () => useSelectedObjectStore.getState();
 
   beforeEach(() => {
     reset();
-    store().setSceneTypes([
+    store().setObjects([
       SceneType.fromJS({ uuid: "st-1", name: "One" }) as SceneType,
       SceneType.fromJS({ uuid: "st-2", name: "Two" }) as SceneType,
       SceneType.fromJS({ uuid: "st-3", name: "Three" }) as SceneType,
-    ]);
+    ], "SceneType");
   });
 
   it("opens one tab per object and activates the newest", () => {
@@ -179,11 +207,11 @@ describe("selectedObjectStore undo/redo", () => {
 
   beforeEach(() => {
     reset();
-    store().setSceneTypes([
+    store().setObjects([
       SceneType.fromJS({ uuid: "st-1", name: "One" }) as SceneType,
       SceneType.fromJS({ uuid: "st-2", name: "Two" }) as SceneType,
-    ]);
-    store().setClasses([Class.fromJS({ uuid: "cl-1", name: "Klass" }) as Class]);
+    ], "SceneType");
+    store().setObjects([Class.fromJS({ uuid: "cl-1", name: "Klass" }) as Class], "Class");
   });
 
   it("has nothing to undo on a freshly opened tab", () => {
@@ -312,9 +340,9 @@ describe("selectedObjectStore undo/redo", () => {
   // the geometry has to move it too — and a step that does not must leave the
   // (beautified, D8) buffer exactly as the user sees it.
   it("pushes a restored geometry into the editor buffer, and only then", () => {
-    store().setClasses([
+    store().setObjects([
       Class.fromJS({ uuid: "cl-2", name: "Drawn", geometry: "original()" }) as Class,
-    ]);
+    ], "Class");
     store().setSelectedObject("cl-2");
     useEditorStore.getState().setCode("beautified original()");
 
@@ -337,5 +365,40 @@ describe("selectedObjectStore undo/redo", () => {
 
     store().setSelectedObject("st-1");
     expect(canUndo()).toBe(false);
+  });
+});
+
+/**
+ * A table's columns are numbered by `sequence` from 1 without gaps (gds Instance_tables;
+ * the database refuses two columns at one position). The store keeps that numbering as
+ * columns come and go, rather than relying on the column list to renumber when it renders.
+ */
+describe("selectedObjectStore table columns", () => {
+  const store = () => useSelectedObjectStore.getState();
+  const sequences = () =>
+    (store().selectedObject as AttributeType).has_table_attribute.map((column) => [column.attribute.uuid, column.sequence]);
+
+  beforeEach(() => {
+    reset();
+    store().setObjects([AttributeType.fromJS({ uuid: "at-table", name: "Table", has_table_attribute: [] }) as AttributeType], "AttributeType");
+    store().setObjects(
+      ["a", "b", "c"].map((uuid) => Attribute.fromJS({ uuid, name: uuid.toUpperCase() }) as Attribute),
+      "Attribute",
+    );
+    store().setSelectedObject("at-table");
+  });
+
+  it("appends an added column after the last one", () => {
+    for (const uuid of ["a", "b", "c"]) store().addChild(uuid, "Column");
+    expect(sequences()).toEqual([["a", 1], ["b", 2], ["c", 3]]);
+  });
+
+  it("renumbers the columns after a removed one", () => {
+    for (const uuid of ["a", "b", "c"]) store().addChild(uuid, "Column");
+    store().removeChild("b", "Column");
+    expect(sequences()).toEqual([["a", 1], ["c", 2]]);
+
+    store().addChild("b", "Column");
+    expect(sequences()).toEqual([["a", 1], ["c", 2], ["b", 3]]);
   });
 });

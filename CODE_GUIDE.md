@@ -30,7 +30,7 @@ The stack swap is the whole point:
 
 | Concern | Old (Aurelia) | New (React) |
 |---|---|---|
-| UI framework | Aurelia 2 | **React 18** |
+| UI framework | Aurelia 2 | **React 19** |
 | State / services | DI services + EventAggregator | **Zustand** stores |
 | UI components | `@aurelia-mdc-web` | **MUI** (Material UI) |
 | Build tool | webpack | **Vite** |
@@ -50,7 +50,8 @@ Before the walkthrough, here are the React ideas that appear everywhere:
    component rendering another component.
 
 2. **Props** are the arguments you pass to a component, like HTML attributes:
-   `<ObjectCard object={x} type="Class" />`. The child receives `{ object, type }`.
+   `<ObjectListItem object={x} type="Class" />`. The child receives
+   `{ object, type }`.
 
 3. **State + re-rendering.** When data a component displays changes, React
    **re-runs the function** and updates the screen. The two ways data changes
@@ -151,8 +152,11 @@ learner:
 
 ### The body — [src/views/main-body/MainBody.tsx](src/views/main-body/MainBody.tsx)
 
-- On mount it **pings the server** after a 1s delay (`useEffect`) and stores the
-  result in `isConnected` local state. While `undefined` it shows a spinner;
+- On mount it **pings the server** immediately (`useEffect`) and stores the
+  result in `isConnected` local state. (This used to sit behind a 1s
+  `setTimeout`, which every page load spent on the "Connecting to the backend…"
+  spinner before the first request went out. There was nothing to wait for:
+  `authStore` restores the stored session synchronously at import time.) While `undefined` it shows a spinner;
   `false` shows "no connection"; `true` shows the real UI. This is the classic
   three-state async pattern.
 - The real UI is three resizable columns (via `react-resizable-panels`):
@@ -166,7 +170,7 @@ AppLayout
 ├─ TopNavBar          (6 menus, undo/redo/refresh/test/save, sign-in button)
 ├─ MainBody
 │   ├─ LeftNav        (10 collapsible category lists)
-│   │   └─ ObjectList → ObjectCard (clickable tiles)
+│   │   └─ ObjectList → ObjectListItem (clickable rows)
 │   ├─ MiddleBody     (tabs for the selected object)
 │   │   ├─ ObjectTabs (VS-Code-style strip of open objects)
 │   │   ├─ GeneralTab (+ type-specific variant, + VizRep editor for 3 types)
@@ -191,9 +195,9 @@ All five live in [src/resources/store/](src/resources/store/):
 
 | Store | Lines | Replaces | Holds |
 |---|---:|---|---|
-| [selectedObjectStore.ts](src/resources/store/selectedObjectStore.ts) | 1645 | `SelectedObjectService` | the metamodel tree + current selection + open tabs + per-tab undo history |
-| [authStore.ts](src/resources/store/authStore.ts) | 157 | `UserService` | `currentUser`, JWT helpers |
-| [editorStore.ts](src/resources/store/editorStore.ts) | 52 | vizrep's globals | the Monaco buffer + preview UI state |
+| [selectedObjectStore.ts](src/resources/store/selectedObjectStore.ts) | 906 | `SelectedObjectService` | the metamodel tree + current selection + open tabs + per-tab undo history |
+| [authStore.ts](src/resources/store/authStore.ts) | 135 | `UserService` | `currentUser`, JWT helpers |
+| [editorStore.ts](src/resources/store/editorStore.ts) | 52 | the VizRep editor's globals | the Monaco buffer + preview UI state |
 | [logStore.ts](src/resources/store/logStore.ts) | 35 | `Logger` + `MdcSnackbarService` | log list + snackbar |
 | [uiStore.ts](src/resources/store/uiStore.ts) | 24 | the `"refresh"` EA channel | the refresh signal |
 
@@ -204,16 +208,16 @@ The in-memory copy of the entire metamodel: arrays of `sceneTypes`, `classes`,
 + `type` + `selectedTab`). Almost the whole rest of the app reads from here. It
 exposes:
 
-- collection getters/setters (`getClasses`, `setClasses`, `addClass`,
-  `removeClass`…) plus generic `getObjects(type)` / `setObjects` / `addObject` /
-  `removeObject` that dispatch on a type string;
+- one generic collection API — `getObjects(type)` / `setObjects` / `addObject` /
+  `removeObject` / `updateLocalObject` — driven by the type registry in
+  [meta-types.ts](src/resources/meta-model/meta-types.ts) rather than by a
+  `switch` per operation;
 - selection logic (`setSelectedObject(uuid)`, `getTypeFromUuid`,
   `deselectObject`, `resetObjects`);
 - a large family of `addChild(uuid, type)` / `removeChild(uuid, type)` mutators
   for editing an object's nested children, plus `updateMinMax`;
 - `updateSelectedField(path, value)` — the two-way-binding workhorse for the
   General tab;
-- `getIcon(geometry)` — see [gotchas](#gotchas), it is stranger than it looks.
 
 **Four things here are worth internalizing**, because they are the trickiest part
 of this whole codebase:
@@ -353,6 +357,9 @@ load. The last line (`useAuthStore.getState().setCurrentUser()`) runs once at
 import time to restore your session from a stored token on page load — the
 equivalent of the original `UserService` constructor.
 
+`login()` and `logout()` also publish on the bus's `login` channel (`true` /
+`false`). That publish is what drives the [session teardown](#session-teardown-signing-out).
+
 ### 3. uiStore — the refresh signal
 
 The smallest store, but conceptually neat. The old app published a `"refresh"`
@@ -402,8 +409,10 @@ against the original.
 | [instance-utility.ts](src/resources/services/instance-utility.ts) | scene-instance / tab-context helpers |
 | [file-utility.ts](src/resources/services/file-utility.ts) | UUID → file-content cache, server-backed |
 | [expression-utility.ts](src/resources/services/expression-utility.ts) | expression evaluation for vizreps |
-| [helper-service.ts](src/resources/services/helper-service.ts) | `DataUrltoFile` / `FiletoDataUrl` |
-| [validation.ts](src/resources/services/validation.ts) | regex validation (verbatim from the original) |
+| [helper-service.ts](src/resources/services/helper-service.ts) | `dataUrlToFile` / `fileToBase64` |
+| [auth-token.ts](src/resources/services/auth-token.ts) | bearer-token storage + the `Authorization` header |
+| [vizrep-icon.ts](src/resources/services/vizrep-icon.ts) | scrapes a list icon out of a VizRep — see [gotchas](#gotchas) |
+| [session-reset.ts](src/resources/services/session-reset.ts) | empties the stores on sign-out — see [session teardown](#session-teardown-signing-out) |
 
 Plus three small helpers in [src/resources/util/](src/resources/util/):
 `textify.ts` (port of the Aurelia value converter), `describe-error.ts`
@@ -429,21 +438,75 @@ via `getState()`.
 
 Two patterns worth knowing:
 
-- **`getCorrectType(type)`** maps the store's type tag to the REST path segment
-  (`"RelationClass"` → `"relationclasses"`, `"UserGroup"` → `"userGroups"`, …).
-  Users and usergroups also live off the `metamodel/` prefix, so most methods
-  carry a couple of `if (type === "users") url = …` special cases.
+- **`apiPathOf(type)`** (from [meta-types.ts](src/resources/meta-model/meta-types.ts))
+  builds the REST path for a type — `"RelationClass"` → `metamodel/relationclasses`,
+  `"UserGroup"` → `userGroups`. Users and usergroups are mounted off the
+  `metamodel/` prefix, which the registry records as their `apiScope`, so no
+  method needs a special case of its own.
 - **Saves are `PATCH …?hardpatch=true`.** "Hard" means the server treats the
   payload as authoritative and deletes what is absent — which is why
   [`selectedObjectRemoveReferenceRole`](src/resources/store/selectedObjectStore.ts)
   bothers to drop an emptied `role` entirely rather than leave it empty.
 
-**Deserialization is inconsistent, and that matters.** Only `getSceneTypes()` and
-`sceneInstancesAllGET()` revive their responses into gds classes (`fromJS`). The
-generic `fetchData()` used by every other list pushes the **raw parsed JSON**
-straight into the store. So most objects in `selectedObjectStore` are plain
+**Deserialization is inconsistent, and that matters.** Only scene types and
+scene instances are revived into gds classes (`fromJS`); the generic
+`loadObjects(type)` used by every other list pushes the **raw parsed JSON**
+straight into the store. The asymmetry is declared in one place, the
+`RESPONSE_QUIRKS` table at the top of the service. So most objects in `selectedObjectStore` are plain
 objects whose prototype is `Object.prototype`. Do not write `instanceof` against
 them — see [below](#type-dispatch-type-never-instanceof).
+
+---
+
+## Session teardown: signing out
+
+Signing out has to destroy the session, not just the token. Everything the
+session built lives in module singletons that last as long as the **page**, not
+as long as the sign-in, and `AppLayout` only stops *rendering* the body while
+nobody is signed in — it destroys none of it. Left alone, the next sign-in
+re-rendered the body over the previous user's session: their whole loaded
+metamodel (the admin-only user and usergroup lists included), their editor tabs
+with unsaved edits and undo history, their VizRep source in the code editor,
+their log panel, and the meshes and cached files behind the 3D preview.
+
+`authStore.logout()` publishes `login: false`, and **two** modules subscribe:
+
+| Module | Resets | Loaded |
+|---|---|---|
+| [session-reset.ts](src/resources/services/session-reset.ts) | `selectedObjectStore`, `editorStore`, `logStore` | eagerly, by [main.tsx](src/main.tsx) |
+| [engine-reset.ts](src/resources/services/engine-reset.ts) | the engine singletons + the file cache | with the engine chunk, by [engine/index.ts](src/engine/index.ts) |
+
+Both are **side-effect imports**: importing the module is what arms its
+subscription, and nothing references the import. Dropping either import
+silently disables that half.
+
+They are two modules rather than one because the engine is behind the lazily
+imported [VizRep editor](#the-vizrep-geometry-editor) chunk and builds a
+`WebGLRenderer` at module scope. Reaching it from the eager half would cost
+every visitor a three.js download and a WebGL context on the sign-in screen —
+and a session that never opened the VizRep editor has no engine state to reset
+in the first place. The engine half lives under `resources/services/` with the
+other engine-facing services rather than in `src/engine/`, which is otherwise
+[kept byte-identical](README.md) with `mmar-vizrep-client-react` — a client with
+no sessions to tear down. For the same reason `editorStore` and `logStore` are
+emptied from `session-reset` with `setState` instead of gaining a `reset()`
+action of their own.
+
+Two rules if you extend either half:
+
+- **Do not clear what `initiator.init()` built.** `init` is memoised and never
+  runs again, so the mock scene type, class and class instance, the cameras, the
+  controls, the plane and the renderer must survive. Emptying
+  `globalObject.sceneTypes` breaks the preview permanently — `runPreview` then
+  bails out with "Engine not ready for preview".
+- **Rebuild the scene with `sceneInitiator.sceneInit()`**, never a bare
+  `new THREE.Scene()`: the scene owns the transform controls, the lights, the
+  grid, the 3D mouse pointer and the intersection plane, and nothing else
+  rebuilds them.
+
+`uiStore` is deliberately *not* reset: its only state is the refresh signal, and
+`LeftNav` unmounts with the body and does a full reload on mount regardless of
+it.
 
 ---
 
@@ -451,36 +514,69 @@ them — see [below](#type-dispatch-type-never-instanceof).
 
 ### [LeftNav.tsx](src/views/left-nav/LeftNav.tsx) — the category sidebar
 
-A great example of the refresh pattern. It defines `SECTIONS` (the 10 object
-categories, each with a `load` function, in the same order as the original). Its
-`useEffect` depends on `[refreshNonce]` — so it loads on mount *and* every time
+A great example of the refresh pattern. Its sections come from
+`LISTED_META_TYPES` in the type registry — order, label and `adminOnly` included
+— so adding a meta type adds its section. Its `useEffect` depends on
+`[refreshNonce]` — so it loads on mount *and* every time
 `triggerRefresh()` is called anywhere. `refreshType` decides full vs. partial
 reload (a `didMount` ref makes the very first run always a full reload).
-`adminOnly` sections (Users, Usergroups) are filtered out unless you are admin.
+Admin-only sections (Users, Usergroups) are filtered out unless you are admin.
 Each section is an MUI `Accordion` that shows a progress bar while loading, then
 an `ObjectList`.
 
-### [ObjectList.tsx](src/views/object-list/ObjectList.tsx) → [ObjectCard.tsx](src/views/object-card/ObjectCard.tsx)
+**A collapsed section renders nothing** — `slotProps={{ transition: { unmountOnExit:
+true } }}`. MUI's `Collapse` keeps its children mounted by default, so without this
+every section's full list is live in the tree, and re-rendering with it, from the
+moment the data lands: ten types' worth of rows behind nine closed accordions.
+Keep it.
 
-`ObjectList` reads its slice of the store *by type* (`TYPE_TO_FIELD` maps
-`"Class"` → the `classes` array), provides search/add/remove, and renders one
-`ObjectCard` per item. Note the `useMemo` for the sorted+filtered list — it only
+### [ObjectList.tsx](src/views/object-list/ObjectList.tsx) → [ObjectListItem.tsx](src/views/object-list-item/ObjectListItem.tsx)
+
+`ObjectList` reads its slice of the store *by type* (`getObjects("Class")`
+resolves to the `classes` array through the registry), provides search/add/remove, and renders one
+`ObjectListItem` per item inside a dense MUI `List`. Note the `useMemo` for the
+sorted+filtered list — it only
 recomputes when the list or the search term changes. "Remove selected" is enabled
 only when the selection belongs to *this* section (`selectedObject` is global, so
 without that check every section's button would light up at once).
 
-`ObjectCard` is a clickable tile. Clicking it (`onButtonClicked`) **opens the
-object in a tab, or focuses the tab it is already open in**. The original also
-saved the outgoing selection first; that was removed when tabs landed, because
-auto-saving on every card click makes an unsaved tab impossible to observe — the
-dirty marker would clear itself the moment you navigated away. Saving is now
-always deliberate: Save / Ctrl+S, or the close prompt.
+**Every selector in this component returns a stable value** — the collection array
+itself, a uuid string, a type string, a boolean — and that is deliberate. This is
+the component with one child per object, so a selector returning a fresh value on
+each store write re-renders the entire list on every keystroke in the General tab.
+Subscribing to `s.selectedObject` did exactly that (`commit()` republishes the
+working copy under a new identity on every edit); it now subscribes to
+`s.selectedObject?.uuid`, which is all it needs. The `?? EMPTY` fallback is a
+module constant for the same reason. See [Performance](#performance-the-rules-that-keep-it-fast).
+
+**The rows live in the section's own bounded scroll box, and above 60 of them
+only the visible ones are mounted** (`useRowWindow`, with `li` spacers carrying
+the height of the rest so the scrollbar stays true). The two go together: the
+bounded box is what makes the windowing tractable, because the visible range
+falls out of one element's `scrollTop` against a known height instead of having
+to locate the list inside a scroll container shared with nine other sections.
+Below the threshold a section renders whole, so the common case is exactly what
+it always was. Row height is *measured* from a real row rather than assumed, with
+the estimate as a fallback for environments that do not lay out (jsdom). Note
+that the spacers size themselves with an inline `style`, not `sx` — that value
+changes on every scroll step, and emotion would mint a CSS class per frame.
+
+`ObjectListItem` is a clickable row — a small icon (the object's own VizRep
+icon, via `vizRepIconOf`) followed by its name on one dense line, with the
+description in a tooltip. It is wrapped in **`memo`**, and its constant `sx`
+objects are hoisted to module scope; both matter because a section can hold
+hundreds of these. Clicking it (`onButtonClicked`) **opens the object in a
+tab, or focuses the tab it is already open in**. The original also saved the
+outgoing selection first; that was removed when tabs landed, because auto-saving
+on every click makes an unsaved tab impossible to observe — the dirty marker
+would clear itself the moment you navigated away. Saving is now always
+deliberate: Save / Ctrl+S, or the close prompt.
 
 `isSelected` is computed by subscribing to just the selected uuid, so only the
-relevant cards re-render when selection changes; the active tab's card is
-disabled so it cannot be re-clicked. A second boolean selector (`openTabs.some`)
-gives background-tab cards a dotted outline — a boolean, so only cards whose
-open-state actually flipped re-render.
+relevant rows re-render when selection changes; the active tab's row is disabled
+(with `opacity: 1` restored, so it stays legible) so it cannot be re-clicked. A
+second boolean selector (`openTabs.some`) gives background-tab rows a dashed left
+border — a boolean, so only rows whose open-state actually flipped re-render.
 
 ### [ObjectTabs.tsx](src/views/object-tabs/ObjectTabs.tsx) — the open-object strip
 
@@ -502,16 +598,16 @@ oversight, and it is pinned by a test.
 
 ### [MiddleBody.tsx](src/views/middle-body/MiddleBody.tsx) — the tab framework
 
-Given the selected object's `type`, it filters `tabDefinitions` (14 rows, copied
-verbatim from the original) down to the tabs that apply — a `SceneType` gets
+Given the selected object's `type`, it filters
+[`TAB_DEFINITIONS`](src/views/middle-body/tab-definitions.ts) (14 rows) down to
+the tabs that apply — a `SceneType` gets
 General/Attributes/Classes/Ports/RelationClasses/Procedures; an `AttributeType`
 gets General/Reference/Table; and so on. The active tab lives in the **store**
 (`selectedTab`, mirrored per open tab as `innerTab`), not in local state; a guard
 falls back to the first visible tab if the current one is not in the visible set.
 Note there is **no** effect resetting the sub-tab on selection any more — the
 store does it, and only for newly opened tabs. It renders
-`GeneralTab` for the General tab and looks up a component from `TAB_COMPONENTS`
-(13 entries) for the rest.
+`GeneralTab` for the General tab and `StructuralTab` for every other one.
 
 ### The General tab — [GeneralTab.tsx](src/views/middle-body/general-tab/GeneralTab.tsx) + [fields.tsx](src/views/middle-body/general-tab/fields.tsx)
 
@@ -542,17 +638,22 @@ download + replace flow via
 
 ### The structural tabs + [ParentChildSelect.tsx](src/views/common/ParentChildSelect.tsx)
 
-This is the cleverest reuse in the app. All 13 tabs in
-[structural-tabs/](src/views/middle-body/structural-tabs/) are thin wrappers —
-a handful of lines that hand a child array and a type string to one shared,
-generic `ParentChildSelect`:
+This is the cleverest reuse in the app. Every tab other than General shows the
+same thing — one or two lists of children, each with its own add/remove controls
+— so they are not components at all. They are the `lists` of a row in
+[tab-definitions.ts](src/views/middle-body/tab-definitions.ts), which
+[StructuralTab.tsx](src/views/middle-body/structural-tabs/StructuralTab.tsx)
+renders through one shared, generic `ParentChildSelect`:
 
-```tsx
-export default function ClassesTab() {
-  const selectedObject = useSelectedObjectStore((s) => s.selectedObject);
-  return <ParentChildSelect items={(selectedObject as any)?.classes}
-                            objecttypetoadd="Class" sortable />;
-}
+```ts
+{
+  label: "Relations",
+  types: ["RelationClass"],
+  lists: [
+    { field: "role_from", childType: "Source", sortable: true },
+    { field: "role_to", childType: "Destination", sortable: true },
+  ],
+},
 ```
 
 `ParentChildSelect` renders a searchable/sortable table of children with add (via
@@ -561,8 +662,9 @@ inline min/max editing, UI-component dropdowns, and row reordering — branching
 columns and behavior on that one type string. It subscribes to `revision` so it
 re-renders after in-place child edits.
 
-The type string is a **pseudo-type**: not always a real object type, but a routing
-key into the store's `addChild`/`removeChild` switch. `"Source"`/`"Destination"`
+`childType` is a **pseudo-type**: not always a real object type, but a routing
+key into the store's `CHILD_HANDLERS` table, which `addChild`/`removeChild`
+dispatch through. `"Source"`/`"Destination"`
 mean a relation class's `role_from`/`role_to`; `"Role"` means an attribute type's
 references; `"Column"` means a table column; `"read_right"` / `"write_right"` /
 `"delete_right"` / `"can_create_instance"` mean usergroup rights (plain uuid
@@ -602,7 +704,7 @@ Every meta object carries a `geometry` field: a string of JavaScript defining an
 `async function vizRep(gc)` that draws the object in 3D. For most types the
 General tab just shows that string in a textarea. For the three types the preview
 pipeline understands — **`Class`, `RelationClass`, `Port`** — it instead shows the
-*VizRep editor block*, ported from the sibling `mmar-vizrep-client-react`:
+*VizRep editor block*:
 
 ```
 ┌─ VizRepGeometryEditor ──────────────┐
@@ -693,10 +795,9 @@ Three rules learned the hard way here:
 (`"Class"` / `"RelationClass"` / `"Port"`) — the same signal `GeneralTab` uses to
 decide whether to render the block at all, so the two can never disagree.
 
-It is tempting to write `selected instanceof Class`, and the vizrep client does
-exactly that. **It does not work here.** That client's backend service revives every
-response into a gds class (`data.map(Class.fromJS)`); this client's
-`backendService.fetchData()` pushes the raw parsed JSON straight into the store, and
+It is tempting to write `selected instanceof Class`. **It does not work here.** This
+client's `backendService.loadObjects()` pushes the raw parsed JSON straight into the
+store rather than reviving it into gds classes (`data.map(Class.fromJS)`), and
 only `SceneType` and `SceneInstance` are ever run through `fromJS`. So the objects in
 `selectedObjectStore` are plain objects whose prototype is `Object.prototype`, and
 every `instanceof` check silently falls through — which is exactly how the preview
@@ -740,7 +841,7 @@ concurrency-safe:
 
 ### Design decisions (D1–D12)
 
-Locked during the vizrep→metamodeling integration. **This table is the record.**
+Locked when the VizRep editor was integrated. **This table is the record.**
 (Earlier revisions of this guide deferred to "the aggregator's `plan.md`"; that
 pointer is dead — `../plan.md` is now the *modeling*-client migration plan and
 carries no D-rows.)
@@ -755,21 +856,122 @@ carries no D-rows.)
 | D6 | Monaco theme `vs-dark`. The canvas container renders on **`#ffffff`** — an earlier revision of this guide recorded `#1e1e1e`, which is not what the code does. |
 | D7 | Fixed pixel heights (300 / 44 / 400) — percentages collapse inside the scrolling tab. The editor box is user-resizable; Monaco's `automaticLayout` picks the new height up. |
 | D8 | Beautify-on-load touches the editor buffer only, never the object. |
-| D9 | Dependency versions pinned to the vizrep client's (verified identical for `three`, `monaco-editor`, `@monaco-editor/react`, `js-beautify`, `troika-three-text`, `zustand`). |
+| D9 | Dependency versions pinned for `three`, `monaco-editor`, `@monaco-editor/react`, `js-beautify`, `troika-three-text` and `zustand`. |
 | D10 | Monaco is self-hosted via `monaco-setup.ts`; no CDN. |
-| D11 | The vizrep AttributeWindow is not ported — `updateAttributeGui` / `removeAttributeGui` are published with no listeners. |
+| D11 | There is no AttributeWindow — `updateAttributeGui` / `removeAttributeGui` are published with no listeners. |
 | D12 | Dev-only test deps (`jsdom`, `@testing-library/react`) for the component suites. |
 
 One later addition sits outside the table: **PreviewButtons also owns a 2D/3D
-toggle**. Vizrep drives that from a toolbar this client does not have, so it lives
-next to Preview — the one control row this feature owns.
+toggle**. This client has no toolbar to put it in, so it lives next to Preview — the
+one control row this feature owns.
+
+---
+
+## Performance: the rules that keep it fast
+
+This app makes a metamodel of a few hundred objects feel instant, and it does so
+by *not rendering* rather than by rendering fast. Four rules carry that, and each
+one was worth a measurable amount. The numbers below are jsdom timings for a
+single left-nav section — a real browser is faster, but the shape is what
+matters.
+
+**1. A store selector must return a stable value.** This is the big one. The
+store republishes `selectedObject` under a new identity on *every* commit, which
+means every keystroke in the General tab. Any component subscribing to
+`s.selectedObject` therefore re-renders on every keystroke — and if that
+component renders one child per object, so does the whole list:
+
+| Objects in one section | Cost of one keystroke, before | after |
+|---:|---:|---:|
+| 50 | 76 ms | 0.3 ms |
+| 200 | 154 ms | 0.2 ms |
+| 500 | 408 ms | 0.2 ms |
+
+The fix was not to make the render cheaper but to stop subscribing to something
+that changes: `ObjectList` reads `s.selectedObject?.uuid`, which is all it wants.
+Note the shape of the "after" column — flat. **If a cost grows with the number of
+loaded objects, something is subscribed too broadly.** The same rule bans `?? []`
+and other fresh-value fallbacks inside a selector; use a module constant.
+
+**2. Anything rendered once per object is wrapped in `memo`.** `ObjectListItem`
+and the log window's `LogRow`. Their props are objects that are replaced rather
+than mutated, so the default shallow comparison is correct. Hoist constant `sx`
+objects to module scope while you are there — an `sx` literal is a new value on
+every render, which defeats emotion's own cache.
+
+**3. Off-screen means unmounted.** The left nav's accordions pass
+`slotProps={{ transition: { unmountOnExit: true } }}`; MUI's `Collapse` otherwise
+keeps every collapsed section's list live in the tree. Lazy chunks
+([GeneralTab](#the-general-tab--general-tabtsx--fieldstsx)) are the same idea
+applied to the bundle.
+
+**4. Repeated work gets an index or a cache, keyed on identity.**
+- `getTypeFromUuid` answers from a `Map` rebuilt only when a collection array is
+  actually replaced. It used to scan all eleven collections per call, and the
+  object tables call it once per rendered row *and* inside the sort comparator.
+- `vizRepIconOf` caches the VizRep scrape on the geometry value's identity
+  (`WeakMap`), which also avoids re-`toString()`-ing a source that routinely
+  embeds a multi-kilobyte base64 texture.
+- `logStore` caps `logArray` at 200 entries and gives each an `id`. Entries are
+  *prepended*, so keying rows by array index made every key shift on each new
+  line and re-rendered the entire log.
+
+Both caches are invalidated by identity, never by content — which is sound here
+precisely because collections are replaced wholesale (`setObjects`, `addObject`,
+`removeObject`, `updateLocalObject` all `set` a new array) and edited objects are
+`reref`'d. That is the same property [the `reref` trick](#1-selectedobjectstore--the-big-one)
+relies on, used for a second purpose.
+
+**5. Above 60 rows, a left-nav section mounts only what is on screen.** Each
+section scrolls in a bounded box of its own and windows its rows
+([ObjectList](#objectlisttsx--objectlistitemtsx)). Expanding a section used to
+cost about a second for 500 objects — roughly half of it MUI's per-row `Tooltip`,
+which is not something you can make cheap, only something you can avoid paying
+500 times:
+
+| Rows in the section | Cost to expand, before | after |
+|---:|---:|---:|
+| 50 | 357 ms | 151 ms |
+| 200 | 510 ms | 91 ms |
+| 500 | 1107 ms | 65 ms |
+
+Flat again, and for the same reason: the work is now proportional to the viewport
+rather than to the data.
+
+**What is deliberately *not* optimised.** A keystroke in the General tab
+re-renders its twelve controlled MUI inputs, ~17 ms in jsdom. That is inherent to
+controlled inputs and flat in the size of the metamodel, so it is left alone.
+
+**How to check.** There is no committed benchmark. Render the component under
+`@testing-library/react` with a few hundred objects in the store, drive
+`updateSelectedField` in a loop inside `act()`, and time it — the table above was
+produced that way. React DevTools' Profiler ("why did this render") is the other
+half.
 
 ---
 
 ## Gotchas
 
-- **Clicking an ObjectCard no longer saves the outgoing object** (it did until tabs
-  landed). The old consequence — previewing an object and then navigating away
+- **The document itself must never scroll — `html, body { overflow: hidden }` in
+  the theme's `MuiCssBaseline` is load-bearing.** The shell is a fixed-viewport
+  layout (`AppLayout` is `100vh`; the left nav, middle body and log window each
+  scroll inside themselves), but nothing enforced that at the document level, so
+  anything sticking out past the viewport grew the document's scroll area and
+  flashed an app-wide scrollbar. The source is `Tooltip`: it is portalled into
+  `<body>`, and although MUI renders it `position: fixed` at first, Popper.js
+  overwrites that on its first update with its default `absolute` strategy plus a
+  `transform` — and an absolutely positioned, transformed box *does* count towards
+  document overflow. Popper's `preventOverflow` guards only the main axis by
+  default, so the `placement="left"`/`"right"` tooltips on log entries and
+  left-nav rows hang past the top/bottom edge; scrolling either list fast keeps
+  opening and repositioning them under the moving cursor, which is when the
+  flicker shows up. Two more pieces go with the clip: the theme turns on
+  `preventOverflow.altAxis` so those tooltips are nudged back into view rather
+  than silently clipped, and the three scroll panels set
+  `overscroll-behavior: contain` so a fast flick that reaches the end of a list
+  does not chain its leftover delta into the document.
+- **Clicking a left-nav list row no longer saves the outgoing object** (it did
+  until tabs landed). The old consequence — previewing an object and then navigating away
   rewrote its `geometry` with the beautified text — is gone with it. What is *not*
   gone: the Preview button still flushes the beautified buffer onto the object, so
   clicking Preview marks the tab dirty even if you typed nothing.
@@ -785,11 +987,14 @@ next to Preview — the one control row this feature owns.
 - **`geometry` is typed `Function`** on the gds `MetaObject` but holds a **string** at
   runtime. Read it with `?.toString()`, write it with an `as unknown as` cast. Don't
   "fix" gds — it is shared with the server.
-- **`getIcon(geometry)` is a string scrape, not an evaluation.** It splits the
+- **`vizRepIcon(geometry)` is a string scrape, not an evaluation.** It splits the
   geometry source on `let icon` / `let map` and fishes out the first `data:` base64
   literal, falling back to a hard-coded placeholder PNG. That is why every card can
   show a thumbnail without running any VizRep code — and why renaming that variable
-  in a geometry snippet silently changes the icon.
+  in a geometry snippet silently changes the icon. **Call `vizRepIconOf(geometry)`,
+  not `vizRepIcon`, from anything that renders**: it caches on the geometry value's
+  identity, which also skips the `toString()` copy of a source that routinely embeds
+  a multi-kilobyte base64 texture. `vizRepIcon` remains the pure function underneath.
 - **`instanceof` against store objects always fails** — they are plain JSON. Branch on
   `type`. ([Details](#type-dispatch-type-never-instanceof).)
 - **The left-nav list lags the General tab by design** — `selectedObject` is a working
@@ -809,23 +1014,22 @@ share resolution):
 - `@gds` → the sibling `../mmar-global-data-structure` repo — the shared DTOs are
   consumed **directly from source**, not npm-installed or copied.
 
-It also **stubs out `jsonwebtoken`** (a Node-only library the shared `User` class
-imports for server-side signing) so it does not crash the browser bundle — see
-[src/stubs/jsonwebtoken.ts](src/stubs/jsonwebtoken.ts). The stub needs *two*
-mechanisms: `resolve.alias` to redirect the import, **and** `optimizeDeps.exclude`
-so esbuild's dep pre-bundler doesn't grab the real package before the alias can
-apply. This kind of "shared code assumes Node, but we are in a browser" friction is
-common when sharing models between server and client.
+There used to be a third piece of glue here: the shared `User` class signed and
+verified tokens itself, so it imported the Node-only `jsonwebtoken`, and the build
+had to alias that import to a browser stub (and exclude it from esbuild's dep
+pre-bundling, or the real package was grabbed before the alias applied). Token
+signing and verification now live in `mmar-server`'s token service, gds carries no
+Node-only import, and both the stub and the aliasing are gone.
 
 Config is read in exactly one place, [src/config.ts](src/config.ts) — services must
 import `API_URL` from there and never touch `import.meta.env` directly. Vite loads
-`.env` always and `.env.development` on top of it in dev, so `npm run dev` targets
-`http://localhost:8000` (the browser runs on the host) while a production build
-falls back to `.env`'s `http://mmar-server:8000` (the in-container hostname).
+`.env` always and `.env.development` on top of it in dev. Both set
+`http://localhost:8000`: the browser runs on the host even when the server is in a
+container, so the in-container hostname `mmar-server:8000` would not resolve for it.
 
 ## Tests
 
-`npm run test` → **168 tests across 18 files**, all green. Vitest defaults to the
+`npm run test` → **230 tests across 27 files**, all green. Vitest defaults to the
 `node` environment; the component suites opt into jsdom per-file with a
 `// @vitest-environment jsdom` docblock — cheaper than a global switch, and it keeps
 the blast radius small. [src/test-setup.ts](src/test-setup.ts) imports
@@ -855,6 +1059,14 @@ those chords is pinned in
 [CodeEditor.test.tsx](src/views/code-editor/CodeEditor.test.tsx), and the
 Ctrl-vs-⌘ split in [platform.test.ts](src/resources/util/platform.test.ts) plus a
 macOS block in the AppLayout suite.
+
+The [session teardown](#session-teardown-signing-out) has one suite per half —
+[session-reset.test.ts](src/resources/services/session-reset.test.ts) and
+[engine-reset.test.ts](src/resources/services/engine-reset.test.ts) — plus
+[TopNavBar.test.tsx](src/views/top-nav-bar/TopNavBar.test.tsx) for the Sign Out
+button's unsaved-changes guard. The engine suite is the one to read before
+touching that half: it pins the scaffolding that must *survive* a teardown as
+carefully as the state that must go.
 
 ---
 

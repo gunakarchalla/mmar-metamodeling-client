@@ -1,114 +1,85 @@
-import {
-  Box,
-  Typography,
-  Stack,
-  Card,
-  CardContent,
-  Tooltip,
-  TextField,
-  MenuItem,
-} from "@mui/material";
-import { useSelectedObjectStore } from "@/resources/store/selectedObjectStore";
+import { Typography, Stack, TextField, MenuItem } from "@mui/material";
+import { facets_not_matching_pattern, value_matches_pattern } from "@gds";
 import { Attribute } from "@gds/models/meta/Metamodel_attributes.structure";
+import FieldsetSection from "@/views/common/FieldsetSection";
+import ObjectPreviewCard from "@/views/common/ObjectPreviewCard";
 import { BoundNumber } from "./fields";
 import InlineObjectPicker from "./InlineObjectPicker";
+import { useSelectedObjectForm } from "./useSelectedObjectForm";
 
-// Ports general-tab-attribute.{ts,html}: the Attribute variant — AttributeType
-// selector, min/max, facets (parsed from the `|`-separated string) and a
-// default-value field that is either a free-text input validated against the
-// attribute type's regex, or a dropdown populated from the facets.
+/**
+ * Attribute-only fields: which attribute type it has, how many values it may
+ * hold, its facets, and its default value.
+ *
+ * Facets are a `|`-separated list of the values the attribute may take: the choices of
+ * a dropdown, or the minimum, maximum and step of a slider. Whether they are present
+ * decides how the default value is entered — picked from the facets, or typed freely.
+ *
+ * The default value and every facet are checked against the attribute type's regular
+ * expression as they are typed, and the attribute cannot be saved while one of them
+ * fails. They are values of the attribute like any other: an instance starts out
+ * holding the default, and a facet is what a user can put in it, so anything refused
+ * here would be refused by the modeling client and by the server the moment it was
+ * used — which costs the modeller the scene they were saving.
+ *
+ * An EMPTY default is checked like any other value rather than skipped, because it is
+ * what an attribute holds until someone fills it in: whether an attribute may be left
+ * unset is what its type's expression says, and an attribute type that refuses "" wants
+ * a default here. The same goes for facets, so `"|||"` is four empty choices, which
+ * such a type refuses, while no facets at all is not a value and is never refused.
+ *
+ * `value_matches_pattern` and `facets_not_matching_pattern` are the checks the modeling
+ * client and the server apply to the same values (see mmar-global-data-structure).
+ */
 export default function GeneralTabAttribute() {
-  const obj = useSelectedObjectStore((s) => s.selectedObject) as Attribute | null;
-  const update = useSelectedObjectStore((s) => s.updateSelectedField);
-  const getIcon = useSelectedObjectStore((s) => s.getIcon);
-  if (!obj) return null;
+  const { object, update } = useSelectedObjectForm();
+  const attribute = object as Attribute | null;
+  if (!attribute) return null;
 
-  // populateFacetList(): facets is a `|`-separated string; empty -> [].
-  const facetsList: string[] = obj.facets ? obj.facets.split("|") : [];
+  const facets = attribute.facets ? attribute.facets.split("|") : [];
+  const attributeType = attribute.attribute_type;
+  const pattern = attributeType?.regex_value;
 
-  // getImage(): icon of the selected attribute type's geometry.
-  const attrTypeImage = obj.attribute_type
-    ? getIcon(obj.attribute_type.geometry?.toString() ?? "")
-    : "";
-
-  // validateDefaultValue(): the default value must match the attribute type's regex.
-  let defaultValueInvalid = false;
-  if (facetsList.length === 0 && obj.attribute_type?.regex_value && obj.default_value) {
-    const regex =
-      typeof obj.attribute_type.regex_value === "string"
-        ? new RegExp(obj.attribute_type.regex_value)
-        : obj.attribute_type.regex_value;
-    defaultValueInvalid = !regex.test(obj.default_value);
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const hasAttrType = !!(obj as any).attribute_type_uuid || !!obj.attribute_type;
+  const defaultValueInvalid = !value_matches_pattern(attribute.default_value ?? "", pattern);
+  const invalidFacets = facets_not_matching_pattern(attribute.facets, pattern);
 
   return (
-    <Box
-      component="section"
-      sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, p: 1.5, mt: 2 }}
-    >
-      <Typography component="legend" variant="caption" color="text.secondary">
-        Attribute
-      </Typography>
-
+    <FieldsetSection legend="Attribute">
       <Stack spacing={2} sx={{ mt: 1 }}>
-        {/* Attribute Type selector */}
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
           <Typography>Attribute Type:</Typography>
-          {hasAttrType && obj.attribute_type && (
-            <Tooltip title={obj.attribute_type.name ?? ""} arrow>
-              <Card className="object-card" sx={{ width: 120 }}>
-                <CardContent
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    p: 1,
-                    "&:last-child": { pb: 1 },
-                  }}
-                >
-                  {attrTypeImage && (
-                    <Box
-                      component="img"
-                      src={attrTypeImage}
-                      alt={obj.attribute_type.name}
-                      sx={{ width: 40, height: 40, objectFit: "contain" }}
-                    />
-                  )}
-                  <Box sx={{ fontSize: 12, mt: 0.5, textAlign: "center" }}>
-                    {obj.attribute_type.name}
-                  </Box>
-                </CardContent>
-              </Card>
-            </Tooltip>
+          {attributeType && (
+            <ObjectPreviewCard name={attributeType.name} geometry={attributeType.geometry} />
           )}
-          <InlineObjectPicker objecttype="Attribute Type" />
+          <InlineObjectPicker childType="Attribute Type" />
         </Stack>
 
-        {/* Min / Max */}
         <Stack direction="row" spacing={2}>
-          <BoundNumber label="Minimum" path="min" obj={obj} update={update} />
-          <BoundNumber label="Maximum" path="max" obj={obj} update={update} />
+          <BoundNumber label="Minimum" path="min" obj={attribute} update={update} />
+          <BoundNumber label="Maximum" path="max" obj={attribute} update={update} />
         </Stack>
 
-        {/* Facets */}
         <TextField
           label="Facets"
-          value={obj.facets ?? ""}
-          onChange={(e) => update("facets", e.target.value)}
-          helperText="The facets must be separated by a | character."
+          value={attribute.facets ?? ""}
+          onChange={(event) => update("facets", event.target.value)}
+          error={invalidFacets.length > 0}
+          helperText={
+            invalidFacets.length > 0
+              ? `${invalidFacets.map((facet) => `"${facet}"`).join(", ")} ${
+                  invalidFacets.length === 1 ? "does" : "do"
+                } not match the regular expression of the attribute type.`
+              : "The facets must be separated by a | character."
+          }
           fullWidth
           size="small"
         />
 
-        {/* Default value: free text (regex-validated) or dropdown from facets */}
-        {facetsList.length === 0 ? (
+        {facets.length === 0 ? (
           <TextField
             label="Default value"
-            value={obj.default_value ?? ""}
-            onChange={(e) => update("default_value", e.target.value)}
+            value={attribute.default_value ?? ""}
+            onChange={(event) => update("default_value", event.target.value)}
             error={defaultValueInvalid}
             helperText={
               defaultValueInvalid
@@ -124,13 +95,19 @@ export default function GeneralTabAttribute() {
           <TextField
             select
             label="Default value"
-            value={obj.default_value ?? ""}
-            onChange={(e) => update("default_value", e.target.value)}
+            value={attribute.default_value ?? ""}
+            onChange={(event) => update("default_value", event.target.value)}
+            error={defaultValueInvalid}
+            helperText={
+              defaultValueInvalid
+                ? "The default value must match the regular expression of the attribute type."
+                : undefined
+            }
             fullWidth
             size="small"
           >
             <MenuItem value="">Select a default value</MenuItem>
-            {facetsList.map((facet) => (
+            {facets.map((facet) => (
               <MenuItem key={facet} value={facet}>
                 {facet}
               </MenuItem>
@@ -138,6 +115,6 @@ export default function GeneralTabAttribute() {
           </TextField>
         )}
       </Stack>
-    </Box>
+    </FieldsetSection>
   );
 }
