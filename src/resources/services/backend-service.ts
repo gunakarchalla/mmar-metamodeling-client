@@ -1,71 +1,49 @@
-import { inject, singleton } from "aurelia";
-import { HttpClient } from "@aurelia/fetch-client";
-import { SelectedObjectService } from "./selected-object";
-import { Class } from "../../../../mmar-global-data-structure/models/meta/Metamodel_classes.structure";
-import { SceneType } from "../../../../mmar-global-data-structure/models/meta/Metamodel_scenetypes.structure";
-import { AttributeType } from "../../../../mmar-global-data-structure/models/meta/Metamodel_attributetypes.structure";
-import { Attribute } from "../../../../mmar-global-data-structure/models/meta/Metamodel_attributes.structure";
-import { Relationclass } from "../../../../mmar-global-data-structure/models/meta/Metamodel_relationclasses.structure";
-import { Port } from "../../../../mmar-global-data-structure/models/meta/Metamodel_ports.structure";
-import { File } from "../../../../mmar-global-data-structure/models/meta/Metamodel_files.structure";
-import { Usergroup } from "../../../../mmar-global-data-structure/models/meta/Metamodel_usergroups.structure";
-import { User } from "../../../../mmar-global-data-structure/models/meta/Metamodel_users.structure";
 import { v4 as uuidv4 } from "uuid";
-import { Role } from "../../../../mmar-global-data-structure/models/meta/Metamodel_roles.structure";
-import { MetaObject } from "../../../../mmar-global-data-structure/models/meta/Metamodel_metaobjects.structure";
-import { Logger } from "./logger";
-import { UserService } from "./user-service";
-import { Procedure } from "../../../../mmar-global-data-structure";
-import { fileURLToPath } from "url";
+import { Class } from "@gds/models/meta/Metamodel_classes.structure";
+import { SceneType } from "@gds/models/meta/Metamodel_scenetypes.structure";
+import { AttributeType } from "@gds/models/meta/Metamodel_attributetypes.structure";
+import { Attribute } from "@gds/models/meta/Metamodel_attributes.structure";
+import { Relationclass } from "@gds/models/meta/Metamodel_relationclasses.structure";
+import { Port } from "@gds/models/meta/Metamodel_ports.structure";
+import { File } from "@gds/models/meta/Metamodel_files.structure";
+import { Usergroup } from "@gds/models/meta/Metamodel_usergroups.structure";
+import { User } from "@gds/models/meta/Metamodel_users.structure";
+import { Role } from "@gds/models/meta/Metamodel_roles.structure";
+import { MetaObject, UUID } from "@gds/models/meta/Metamodel_metaobjects.structure";
+import { Procedure } from "@gds/models/meta/Metamodel_procedure.structure";
+import { SceneInstance } from "@gds/models/instance/Instance_scenes.structure";
+import { apiFetch } from "./api";
 import { HelperService } from "./helper-service";
+import { useSelectedObjectStore } from "@/resources/store/selectedObjectStore";
+import { useLogStore } from "@/resources/store/logStore";
+import { useAuthStore } from "@/resources/store/authStore";
 
-singleton();
+const log = (value: string, status: string) => useLogStore.getState().log(value, status);
+const store = () => useSelectedObjectStore.getState();
+const auth = () => useAuthStore.getState();
 
-@inject(HttpClient)
-@inject(SelectedObjectService)
-@inject(Logger)
-@inject(UserService)
 export class BackendService {
-  private baseUrl = process.env.API_URL + "/" || "http://localhost:8000/";
-
-  constructor(
-    private http: HttpClient,
-    private selectedObjectService: SelectedObjectService,
-    private logger: Logger,
-    private userService: UserService,
-    private helperService: HelperService,
-  ) {
-    this.http.configure((config) =>
-      config.withBaseUrl(this.baseUrl).withDefaults({
-        credentials: "same-origin",
-        headers: {
-          Accept: "application/json",
-          "X-Requested-With": "Fetch",
-        },
-      }),
-    );
-  }
+  private helperService = new HelperService();
 
   // test if the server is running
-  async ping(): Promise<boolean> {
+  async ping(): Promise<boolean | undefined> {
     try {
-      if (this.userService.checkTokenAndLogoutIfExpired()) {
-        this.userService.logout();
+      if (auth().checkTokenAndLogoutIfExpired()) {
+        auth().logout();
         return;
       }
-      return (await this.http.fetch("test")).ok;
+      return (await apiFetch("test")).ok;
     } catch (error) {
-      this.logger.log(`Error testing server: ${error}`, "error");
+      log(`Error testing server: ${error}`, "error");
     }
   }
 
-  async getSceneTypes(): Promise<SceneType[]> {
+  async getSceneTypes(): Promise<SceneType[] | undefined> {
     try {
       const sceneTypes: SceneType[] = [];
-      //this.selectedObjectService.setSceneTypes([]);
       const token = localStorage.getItem("auth_token");
       if (!token) return [];
-      const response = await this.http.fetch("metamodel/sceneTypes", {
+      const response = await apiFetch("metamodel/sceneTypes", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -75,15 +53,14 @@ export class BackendService {
         new Error("Failed to get scene types");
       } else {
         for (const sceneType of (await response.json()).sceneTypes) {
-          //sceneType.type = "SceneType";
           sceneTypes.push(SceneType.fromJS(sceneType) as SceneType);
         }
 
-        this.selectedObjectService.setSceneTypes(sceneTypes);
+        store().setSceneTypes(sceneTypes);
       }
-      return this.selectedObjectService.getSceneTypes();
+      return store().getSceneTypes();
     } catch (error) {
-      this.logger.log(`Error getting scene types: ${error}`, "error");
+      log(`Error getting scene types: ${error}`, "error");
     }
   }
 
@@ -100,10 +77,7 @@ export class BackendService {
   }
 
   async getAttributeTypes(): Promise<AttributeType[]> {
-    return this.fetchData<AttributeType>(
-      "metamodel/attributeTypes",
-      "AttributeType",
-    );
+    return this.fetchData<AttributeType>("metamodel/attributeTypes", "AttributeType");
   }
 
   async getAttributes(): Promise<Attribute[]> {
@@ -111,10 +85,7 @@ export class BackendService {
   }
 
   async getRelationClasses(): Promise<Relationclass[]> {
-    return this.fetchData<Relationclass>(
-      "metamodel/relationclasses",
-      "RelationClass",
-    );
+    return this.fetchData<Relationclass>("metamodel/relationclasses", "RelationClass");
   }
 
   async getPorts(): Promise<Port[]> {
@@ -125,9 +96,9 @@ export class BackendService {
     return this.fetchData<File>("metamodel/files", "File");
   }
 
-  async getFileByUUID(uuid: string): Promise<globalThis.File> {
+  async getFileByUUID(uuid: string): Promise<globalThis.File | undefined> {
     try {
-      const response = await this.http.fetch(`metamodel/files/${uuid}`);
+      const response = await apiFetch(`metamodel/files/${uuid}`);
       if (!response.ok) {
         throw new Error(`${response.statusText} - ${await response.json()}`);
       }
@@ -135,17 +106,17 @@ export class BackendService {
       const file = new globalThis.File([blob], uuid, { type: blob.type });
       return file;
     } catch (error) {
-      this.logger.log(`Error fetching endpoint: ${error}`, "error");
+      log(`Error fetching endpoint: ${error}`, "error");
     }
   }
 
-  async patchFileByUUID(uuid: string, file: globalThis.File): Promise<string> {
+  async patchFileByUUID(uuid: string, file: globalThis.File): Promise<string | undefined> {
     try {
       const token = localStorage.getItem("auth_token");
       if (!token) return;
       const formData = new FormData();
       formData.append("file", file);
-      const response = await this.http.fetch(`metamodel/files/${uuid}`, {
+      const response = await apiFetch(`metamodel/files/${uuid}`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -157,7 +128,7 @@ export class BackendService {
       }
       return await response.json();
     } catch (error) {
-      this.logger.log(`Error patching file: ${error}`, "error");
+      log(`Error patching file: ${error}`, "error");
     }
   }
 
@@ -169,7 +140,6 @@ export class BackendService {
     return this.fetchData<Procedure>("metamodel/independent_procedures", "Procedure");
   }
 
-
   async getUsersByUserGroupUuid(uuid: string): Promise<User[]> {
     return this.fetchData<User>(`users/usergroups/${uuid}`, "User");
   }
@@ -177,11 +147,12 @@ export class BackendService {
   async createNewObject(type: string) {
     try {
       const initialType = type;
-      type = this.getCorrectType(type);
+      type = this.getCorrectType(type) as string;
       const token = localStorage.getItem("auth_token");
       const generatedUuid = uuidv4();
       const formData = new FormData();
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let content: any = {
         uuid: generatedUuid,
         name: "New " + type,
@@ -218,9 +189,9 @@ export class BackendService {
       if (type === "userGroups") url = `${type}/${generatedUuid}`;
       if (type === "users") {
         url = `login/signup`;
-        content = { "username": "newuser", "password": "newuser" };
+        content = { username: "newuser", password: "newuser" };
       }
-      const response = await this.http.fetch(url, {
+      const response = await apiFetch(url, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -230,18 +201,31 @@ export class BackendService {
       if (!response.ok) throw new Error(`Failed to create ${type}`);
       const toReturn = await response.json();
       toReturn.type = initialType;
-      this.selectedObjectService.addObject(toReturn, initialType);
+      store().addObject(toReturn, initialType);
       return toReturn;
     } catch (error) {
-      this.logger.log(`Error creating new object: ${error}`, "error");
+      log(`Error creating new object: ${error}`, "error");
     }
   }
 
   async saveSelectedObject() {
+    return this.saveObject(
+      store().getSelectedObject() as MetaObject,
+      store().getType() as string,
+    );
+  }
+
+  /**
+   * Persist one object. Split out of saveSelectedObject so a *background* tab
+   * can be saved (the unsaved-changes prompt when closing it) without first
+   * having to make it the active selection.
+   */
+  async saveObject(objectToSave: MetaObject, initialType: string) {
     try {
-      const initialType = this.selectedObjectService.getType();
-      const type = this.getCorrectType(initialType);
-      const object = this.selectedObjectService.getSelectedObject();
+      const type = this.getCorrectType(initialType) as string;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const object = objectToSave as any;
+      if (!object || !type) return;
       const token = localStorage.getItem("auth_token");
       let url = `metamodel/${type}/${object.uuid}?hardpatch=true`;
       if (type === "users") url = `${type}/${object.uuid}?hardpatch=true`;
@@ -251,7 +235,7 @@ export class BackendService {
           url = `metamodel/files/${object.uuid}?hardpatch=true&compress=true&targetWidth=${object["targetWidth"]}&quality=${object["quality"]}`;
         }
       }
-      const response = await this.http.fetch(url, {
+      const response = await apiFetch(url, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -261,20 +245,22 @@ export class BackendService {
 
       if (!response.ok) throw new Error(`Failed to get ${type}`);
 
-      this.logger.log(`Object ${object.name} saved`, "info");
+      log(`Object ${object.name} saved`, "info");
       const toReturn = await response.json();
       toReturn.type = initialType;
-      this.selectedObjectService.updateLocalObject(toReturn);
+      store().updateLocalObject(toReturn);
+      // the tab's working copy now matches the server: drop the unsaved marker
+      store().markTabClean(object.uuid);
       return toReturn;
     } catch (error) {
-      this.logger.log(`Error saving object: ${error}`, "error");
+      log(`Error saving object: ${error}`, "error");
     }
   }
 
-  async postRole(): Promise<Role> {
+  async postRole(): Promise<Role | undefined> {
     try {
       const token = localStorage.getItem("auth_token");
-      const response = await this.http.fetch(`metamodel/roles/${uuidv4()}`, {
+      const response = await apiFetch(`metamodel/roles/${uuidv4()}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -292,16 +278,16 @@ export class BackendService {
   async getSpecificObject(
     uuid: string,
     type: string,
-  ): Promise<{ MetaObject: MetaObject; Type: string }> {
+  ): Promise<{ MetaObject: MetaObject; Type: string } | undefined> {
     try {
       const initialType = type;
-      type = this.getCorrectType(type);
+      type = this.getCorrectType(type) as string;
       const token = localStorage.getItem("auth_token");
       if (!token) return;
       let url = `metamodel/${type}/${uuid}`;
       if (type === "userGroups") url = `${type}/${uuid}`;
       if (type === "users") url = `${type}/uuid/${uuid}`;
-      const response = await this.http.fetch(url, {
+      const response = await apiFetch(url, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -313,34 +299,33 @@ export class BackendService {
       const returnedObject = await response.json();
       returnedObject.type = initialType;
       // update the object if it appears in the selected object service list
-      this.selectedObjectService.updateLocalObject(returnedObject);
+      store().updateLocalObject(returnedObject);
       return { MetaObject: returnedObject, Type: initialType };
     } catch (error) {
-      this.logger.log(`Error getting object: ${error}`, "error");
+      log(`Error getting object: ${error}`, "error");
     }
   }
 
   async deleteObject(uuid: string, type: string) {
     try {
-      type = this.getCorrectType(type);
+      type = this.getCorrectType(type) as string;
       const token = localStorage.getItem("auth_token");
       if (!token) return;
       let url = `metamodel/${type}/${uuid}`;
       if (type === "userGroups") url = `${type}/${uuid}`;
       if (type === "users") url = `${type}/${uuid}`;
-      const response = await this.http.fetch(url, {
+      const response = await apiFetch(url, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!response.ok)
-        throw new Error(`${response.statusText} - ${await response.json()}`);
-      this.selectedObjectService.removeObject(uuid);
+      if (!response.ok) throw new Error(`${response.statusText} - ${await response.json()}`);
+      store().removeObject(uuid);
 
       return response;
     } catch (error) {
-      this.logger.log(`Error deleting ${type}: ${error}`, "error");
+      log(`Error deleting ${type}: ${error}`, "error");
     }
   }
 
@@ -376,56 +361,99 @@ export class BackendService {
     }
   }
 
-  getCorrectType(type: string) {
+  getCorrectType(type: string): string | undefined {
     switch (type) {
       case "SceneType":
         return "sceneTypes";
-        break;
       case "Class":
         return "classes";
-        break;
       case "RelationClass":
         return "relationclasses";
-        break;
       case "AttributeType":
         return "attributeTypes";
-        break;
       case "Attribute":
         return "attributes";
-        break;
       case "Port":
         return "ports";
-        break;
       case "File":
         return "files";
-        break;
       case "Role":
         return "roles";
-        break;
       case "Procedure":
         return "procedures";
-        break;
       case "UserGroup":
         return "userGroups";
-        break;
       case "User":
         return "users";
-        break;
       default:
         console.warn(`Unknown type: ${type}`);
     }
   }
 
-  private async fetchData<T>(
-    endpoint: string,
-    objectType: string,
-  ): Promise<T[]> {
+  /**
+   * GET /metamodel/files/alluuids -> UUID[] (server wraps them under `uuids`).
+   * Ported 1:1 from the vizrep client's backend-service for the vizrep-editor
+   * services (meta-utility.getAllFileUUIDs). Endpoint prefixed with `metamodel/`
+   * to match this client's file routes (mmar-server mounts files under /metamodel).
+   */
+  async getAllFileUUIDs(): Promise<UUID[]> {
     try {
-      const items: T[] = [];
-      //this.selectedObjectService.setObjects([], objectType);
       const token = localStorage.getItem("auth_token");
       if (!token) return [];
-      const response = await this.http.fetch(endpoint, {
+      const response = await apiFetch("metamodel/files/alluuids", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`${response.statusText} - ${await response.text()}`);
+      }
+      const result = JSON.parse(await response.text());
+      return result["uuids"];
+    } catch (error) {
+      log(`Error getting file uuids: ${error}`, "error");
+      return [];
+    }
+  }
+
+  /**
+   * GET /instances/sceneTypes/{uuid}/sceneInstances -> SceneInstance[].
+   * Ported 1:1 from the vizrep client for instance-utility.getAllSceneInstancesFromDB.
+   */
+  async sceneInstancesAllGET(sceneTypeUUID: string): Promise<SceneInstance[]> {
+    try {
+      if (sceneTypeUUID === undefined || sceneTypeUUID === null) {
+        throw new Error("The parameter 'sceneTypeUUID' must be defined.");
+      }
+      const token = localStorage.getItem("auth_token");
+      if (!token) return [];
+      const url = `instances/sceneTypes/${encodeURIComponent(sceneTypeUUID)}/sceneInstances`;
+      const response = await apiFetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`${response.statusText} - ${await response.text()}`);
+      }
+      const data = await response.json();
+      return Array.isArray(data)
+        ? data.map((item) => SceneInstance.fromJS(item) as SceneInstance)
+        : [];
+    } catch (error) {
+      log(`Error getting scene instances: ${error}`, "error");
+      return [];
+    }
+  }
+
+  private async fetchData<T>(endpoint: string, objectType: string): Promise<T[]> {
+    try {
+      const items: T[] = [];
+      const token = localStorage.getItem("auth_token");
+      if (!token) return [];
+      const response = await apiFetch(endpoint, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -435,29 +463,28 @@ export class BackendService {
         throw new Error(`${response.statusText} - ${await response.json()}`);
       }
       for (const item of await response.json()) {
-        //item.type = objectType;
         items.push(item);
       }
-      this.selectedObjectService.setObjects(items, objectType);
-      return this.selectedObjectService.getObjects(objectType);
+      store().setObjects(items, objectType);
+      return store().getObjects(objectType) as T[];
     } catch (error) {
-      this.logger.log(
-        `Error getting ${objectType.toLowerCase()}s: ${error}`,
-        "error",
-      );
+      log(`Error getting ${objectType.toLowerCase()}s: ${error}`, "error");
       return [];
     }
   }
 
   private async makeRequest<T>(endpoint: string): Promise<T | undefined> {
     try {
-      const response = await this.http.fetch(endpoint);
+      const response = await apiFetch(endpoint);
       if (!response.ok) {
         throw new Error(`${response.statusText} - ${await response.json()}`);
       }
       return await response.json();
     } catch (error) {
-      this.logger.log(`Error fetching ${endpoint}: ${error}`, "error");
+      log(`Error fetching ${endpoint}: ${error}`, "error");
     }
   }
 }
+
+// Singleton instance (replaces the Aurelia @singleton DI registration).
+export const backendService = new BackendService();

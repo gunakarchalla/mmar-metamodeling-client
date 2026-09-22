@@ -1,30 +1,77 @@
-# MMAR Metamodeling Platform - Metamodeling Client Project
+# mmar-metamodeling-client-react
 
-This project is part of the MMAR Metamodeling Platform, focusing on the Metamodeling Client.
+A React port of the MMAR **metamodel-design** tool (`mmar-metamodeling-client`),
+built for functional parity with the Aurelia 2 original. Same backend, same
+shared DTOs, same workflows — re-implemented on **React + TypeScript + Vite +
+MUI (Material UI) + Zustand**.
 
-## Installation
+It is a single-page, **no-router** app: navigation is driven by a singleton
+selection store (`selectedObjectStore`) plus a UI refresh signal (`uiStore`),
+mirroring the original's `SelectedObjectService` + `EventAggregator`.
 
-The Metamodeling Client is part of the MMAR Metamodeling Platform. To install the entire platform, please refer to the [MMAR repository](https://github.com/MM-AR/mmar) or the Wiki Entry of the [MMAR Manual Installation](https://github.com/MM-AR/mmar/wiki/Manual-MMAR-Installation).
+## Architecture
 
+- **`src/resources/store/`** — Zustand stores ported from the Aurelia services:
+  - `selectedObjectStore` — the in-memory metamodel tree + current selection
+    (port of `SelectedObjectService`).
+  - `authStore` — login/logout/signup, JWT in `localStorage["auth_token"]`
+    (port of `UserService`).
+  - `logStore` — log list + MUI Snackbar (replaces `Logger` + `MdcSnackbarService`).
+  - `uiStore` — refresh signal (replaces the `"refresh"` EventAggregator channel).
+- **`src/resources/services/`** — framework-agnostic logic reused from the
+  original: `validation.ts`, `helper-service.ts` (verbatim), and
+  `backend-service.ts` (Aurelia `HttpClient` swapped for a `fetch` wrapper in
+  `api.ts`).
+- **`src/views/`** — the UI as React components (MUI), one folder per region:
+  `layout/`, `top-nav-bar/`, `left-nav/`, `middle-body/` (tab framework +
+  General-tab variants + structural/relational tabs), `object-list/`,
+  `object-card/`, `common/` (shared `ModalObjectSelect`, `ParentChildSelect`,
+  `AppSnackbar`), `log-window/`, `footer/`, `right-nav/`, `auth/`.
 
-## Contributing
+## Shared DTOs (`@gds`)
 
-We welcome contributions! Please follow these steps:
+The shared TypeScript DTOs in the sibling `../mmar-global-data-structure` are
+consumed **unchanged** via a path alias `@gds` (configured in both
+`vite.config.ts` and `tsconfig.json`). They are not copied or npm-installed.
+DTOs are imported with explicit paths, e.g.
+`import { SceneType } from "@gds/models/meta/Metamodel_scenetypes.structure";`
+and (de)serialized with `class-transformer` exactly as the original does
+(`reflect-metadata` is imported as the **first line** of `src/main.tsx`).
 
-1. Fork the development branche of the repository you want to work on.
-2. Create a new branch (`git checkout -b feature/your-feature`).
-3. Commit your changes (`git commit -am 'Add new feature'`).
-4. Push to the branch (`git push origin feature/your-feature`).
-5. Create a new Pull Request.
+## Configuration
 
-Contributions must be documented to be merged into the project. If you contribute something to the project, please document the according changes into the Wiki, or the readme.
+Config comes from Vite env vars (`import.meta.env.VITE_*`), surfaced through
+`src/config.ts`:
 
-## License
+| Var | Default | Meaning |
+|---|---|---|
+| `VITE_API_URL` | `http://localhost:8000` | Base URL of `mmar-server` (browser context) |
 
-This repository is licensed under the GNU AFFERO GENERAL PUBLIC LICENSE Version 3. 
+Set it in `.env` / `.env.development`. The browser runs on the host, so keep
+`VITE_API_URL=http://localhost:8000` even inside Docker (the `mmar_server`
+service hostname does not resolve in the browser; it is host-mapped `8000:8000`).
 
-The GNU Affero General Public License (GNU AGPL) is a free, copyleft license published by the Free Software Foundation in November 2007, and based on the GNU GPL version 3 and the Affero General Public License. It is intended for software designed to be run over a network, adding a provision requiring that the corresponding source code of modified versions of the software be prominently offered to all users who interact with the software over a network (https://en.wikipedia.org/wiki/GNU_Affero_General_Public_License).
+## Run / build
 
-The GNU AGPL is specifically designed to ensure cooperation with the community in the case of network server software. The licenses for most software are designed to take away your freedom to share and change the works. By contrast, the GNU AGPL is intended to guarantee your freedom to share and change all versions of a program–to make sure it remains free software for all its users (https://www.gnu.org/licenses/agpl-3.0.en.html).
+```bash
+npm install
+npm run dev        # Vite dev server on http://localhost:8075
+npm run build      # tsc --noEmit && vite build
+npm run preview    # serve the production build
+npm run typecheck  # tsc --noEmit
+npm run test       # vitest run (unit tests for the reused services)
+npm run lint       # eslint
+```
 
-This means that any kind of published change done to the repository must be published again under the same license. For more information have a look at the LICENSE file.
+The app talks to **`mmar-server` on `:8000`** (start it with
+`cd ../mmar-server && npm run debug`, plus a reachable Postgres). Log in with
+the dev credentials (`admin` / `admin`). It runs alongside the original Aurelia
+metamodeling client (`:8070`) for side-by-side comparison.
+
+## Scope
+
+Functional parity with the Aurelia client: auth, the 10 left-nav object lists,
+object create/save/delete, every populated tab and dialog (General-tab variants,
+structural/relational tabs, rights tabs, file upload). The intentionally-inert
+parts of the original — disabled File/View/Edit/Diagram top-nav menus, empty
+right-nav and footer — are rendered as static stubs.

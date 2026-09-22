@@ -1,33 +1,13 @@
-import { inject, singleton } from "aurelia";
-import { MdcSnackbarService } from "@aurelia-mdc-web/snackbar";
+import { useLogStore } from "@/resources/store/logStore";
 
-singleton();
+/**
+ * Thin shim replacing the Aurelia `Logger` service. The engine ports keep their
+ * `this.logger.log(value, status)` calls working by being constructed with this
+ * object. It simply forwards to the logStore (which prepends to logArray and
+ * raises a snackbar on errors).
+ */
+export const logger = {
+  log: (value: string, status: string): void => useLogStore.getState().log(value, status),
+};
 
-@inject(MdcSnackbarService)
-export class Logger {
-  logArray: { value: string; status: string }[] = [];
-
-  constructor(private snackbar: MdcSnackbarService) {
-    this.logArray = [];
-    this.log("initializing logger", "info");
-  }
-
-  log(value: string, status: string) {
-    if (status === "error") {
-      console.error(value);
-      this.snackbar.open(value, undefined, {
-        timeout: 5000,
-        dismissible: true,
-        classes: "custom-snackbar--snackbar-error",
-      });
-    }
-    this.logArray.unshift({
-      value: value,
-      status: status,
-    });
-  }
-
-  attached() {
-    this.log("initializing log window", "info");
-  }
-}
+export type Logger = typeof logger;
