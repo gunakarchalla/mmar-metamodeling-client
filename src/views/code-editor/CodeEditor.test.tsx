@@ -9,6 +9,7 @@
 //   - the `previewButtonClicked` -> `updatedGeometryValue` handshake.
 //   - the undo/redo keybindings the editor takes over from Monaco, so the geometry
 //     field steps the tab's history like every other bound field.
+//   - no forced wrap of long lines.
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 
@@ -19,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   redo: vi.fn(),
   beforeMountSpy: vi.fn(),
   onMountSpy: vi.fn(),
+  optionsSpy: vi.fn(),
 }));
 
 // Side-effect import that wires Monaco's ?worker bundles — irrelevant (and unloadable)
@@ -33,14 +35,17 @@ vi.mock("@monaco-editor/react", () => ({
     onChange,
     beforeMount,
     onMount,
+    options,
   }: {
     value: string;
     onChange: (v: string | undefined) => void;
     beforeMount: (monaco: unknown) => void;
     onMount: (editor: unknown, monaco: unknown) => void;
+    options: Record<string, unknown>;
   }) => {
     mocks.beforeMountSpy(beforeMount);
     mocks.onMountSpy(onMount);
+    mocks.optionsSpy(options);
     return (
       <textarea
         data-testid="monaco"
@@ -205,5 +210,15 @@ describe("CodeEditor — undo/redo keybindings", () => {
 
     expect(mocks.redo).toHaveBeenCalledTimes(2);
     expect(mocks.undo).not.toHaveBeenCalled();
+  });
+});
+
+describe("CodeEditor — long lines", () => {
+  it("disables Monaco's forced wrap of long lines", () => {
+    render(<CodeEditor />);
+
+    expect(mocks.optionsSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ wordWrapOverride1: "off" }),
+    );
   });
 });

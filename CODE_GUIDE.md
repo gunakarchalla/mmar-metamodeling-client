@@ -999,6 +999,9 @@ half.
   `type`. ([Details](#type-dispatch-type-never-instanceof).)
 - **The left-nav list lags the General tab by design** — `selectedObject` is a working
   copy; the card catches up on save.
+- **Both Monaco editors set `wordWrapOverride1: "off"`.** Without it Monaco
+  force-wraps sources dominated by long lines (inline base64/glTF), which breaks
+  sticky scroll and blanks the editor.
 - **In tests, `three`, `@monaco-editor/react` and `monaco-setup` must be mocked.**
   `three` builds a `WebGLRenderer` at module scope and needs a real WebGL context.
 
@@ -1029,7 +1032,7 @@ container, so the in-container hostname `mmar-server:8000` would not resolve for
 
 ## Tests
 
-`npm run test` → **230 tests across 27 files**, all green. Vitest defaults to the
+`npm run test` → **231 tests across 27 files**, all green. Vitest defaults to the
 `node` environment; the component suites opt into jsdom per-file with a
 `// @vitest-environment jsdom` docblock — cheaper than a global switch, and it keeps
 the blast radius small. [src/test-setup.ts](src/test-setup.ts) imports

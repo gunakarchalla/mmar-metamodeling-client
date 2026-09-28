@@ -53,6 +53,8 @@ export default function BoundCodeEditor({
           automaticLayout: true,
           fontSize: 13,
           scrollBeyondLastLine: false,
+          // Prevent Monaco's forced wrap of long lines, which breaks sticky scroll.
+          wordWrapOverride1: "off",
         }}
       />
     </Box>
