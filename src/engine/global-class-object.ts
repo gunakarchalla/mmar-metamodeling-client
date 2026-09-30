@@ -82,17 +82,15 @@ export class GlobalClassObject {
       }
     }
 
-    //if icon not defined try to take map
+    //if icon not defined try to take map. The last `data:` literal wins, so a vizRep
+    //that reassigns `map` shows the texture it ends up using (same rule as
+    //vizrep-icon.ts).
     if (map == "") {
       vizRep = wholeVizRep.split("let map")[1];
       if (vizRep) {
         const arrStr: string[] = vizRep.split("'");
         for (const substring of arrStr) {
-          const string: string = substring;
-          if (string.startsWith("data")) {
-            map = string;
-            return map;
-          }
+          if (substring.startsWith("data")) map = substring;
         }
       }
     }
