@@ -2,7 +2,6 @@ import { UUID, Port, SceneType, Attribute } from "@gds";
 import { plainToInstance } from "class-transformer";
 import { globalObject } from "@/engine/global-definition";
 import { backendService } from "./backend-service";
-import { fileUtility } from "./file-utility";
 
 /** Anything the tree walker below can descend through. */
 interface TreeNode {
@@ -18,11 +17,6 @@ interface TreeNode {
  */
 export class MetaUtility {
   private globalObjectInstance = globalObject;
-
-  async getFileByUUID(uuid: UUID): Promise<string> {
-    const file = await fileUtility.getFile(uuid);
-    return file as string;
-  }
 
   /** Every scene type on the server, ready to seed the engine's scene tree. */
   async getAllSceneTypesFromDB() {

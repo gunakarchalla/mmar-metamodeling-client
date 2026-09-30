@@ -1,11 +1,11 @@
 import { UUID } from "@gds";
 import { globalObject } from "@/engine/global-definition";
 import { logger } from "@/resources/services/logger";
-import { metaUtility } from "@/resources/services/meta-utility";
+import { fileUtility } from "@/resources/services/file-utility";
 
 /**
  * Port of the old `resources/global_class_object.ts` (DI-stripping recipe):
- * GlobalDefinition / Logger / MetaUtility injections become module-singleton
+ * GlobalDefinition / Logger / FileUtility injections become module-singleton
  * imports. Bodies unchanged.
  */
 export class GlobalClassObject {
@@ -17,7 +17,6 @@ export class GlobalClassObject {
 
   private globalObjectInstance = globalObject;
   private logger = logger;
-  private metaUtility = metaUtility;
 
   constructor() {
     this.classNames = [];
@@ -74,11 +73,10 @@ export class GlobalClassObject {
         if (string.startsWith("data")) {
           map = string;
           return map;
-        } else if (string.endsWith("getFile(")) {
+        } else if (string.endsWith("getImageByUUID(")) {
           next = true;
         } else if (next) {
-          const str = await this.metaUtility.getFileByUUID(string);
-          map = str;
+          map = (await fileUtility.getDataUrl(string)) ?? "";
           break;
         }
       }

@@ -12,8 +12,8 @@ declare type ExpressionUtility = {
   attrval(attrUUID: string): Promise<string>;
   /** Calls the value of the attribute instance in the local client based on the name of the meta attribute. */
   attrvalByName(attrName: string): Promise<string>;
-  /** Calls the value of the attribute instance in the local client based on the UUID of any type of instance and the meta attribute UUID. */
-  attrvalByInstanceUUID(instUUID: string, attrUUID: string): Promise<string>;
+  /** Calls the value of the attribute instance in the local client based on the UUID of the meta attribute and the UUID of any type of instance. */
+  attrvalByInst(attrUUID: string, instUUID: string): Promise<string>;
   /** Retrieves the attribute instance in the local client based on the UUID of any type of instance and the meta attribute UUID. */
   getAttrByInstanceUUID(instanceUUID: string, metaAttributeUUID: string): Promise<AttributeInstance>;
   /** Updates the value of the attribute instance in the local client based on the UUID of any type of instance and the meta attribute UUID. */
@@ -34,13 +34,10 @@ declare type ExpressionUtility = {
   checkForVisualizationUpdate(): void;
   /** Checks if there is a visual update regarding a specific AttributeInstance. */
   checkForVisualizationUpdateByAttributeUUID(instanceUUID: string, metaAttributeUUID: string): void;
-  /**
-   * Retrieves the file from the local storage or fetches it from the server if not found.
-   *
-   * @param {string} fileUUID - The UUID of the file.
-   * @returns {Promise<string>} - A promise resolving to the file content as a string.
-   */
-  getFile(fileUUID: string): Promise<string>;
+  /** Retrieves an uploaded file as a data URL, e.g. for a texture ("map") or an "icon". */
+  getImageByUUID(fileUUID: string): Promise<string>;
+  /** Retrieves an uploaded file as raw bytes, for graphic_gltf or graphic_stl. */
+  getGltfByUUID(fileUUID: string): Promise<ArrayBuffer>;
 };
 
 /**

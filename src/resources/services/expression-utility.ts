@@ -7,12 +7,12 @@ import {
 import { globalObject } from "@/engine/global-definition";
 import { instanceUtility } from "./instance-utility";
 import { eventBus } from "./event-bus";
-import { metaUtility } from "./meta-utility";
+import { fileUtility } from "./file-utility";
 
 /**
  * Port of the old `expression_utility.ts` — the `gc.expression.*` API surface the
  * VizRep scripts call. DI stripped: globalObject / instanceUtility / eventBus
- * (was EventAggregator) / metaUtility become module-singleton imports. Bodies
+ * (was EventAggregator) / fileUtility become module-singleton imports. Bodies
  * unchanged (including the `readyForVizRepUpdate` lock + bus publishes that drive
  * the live-preview loop).
  */
@@ -20,7 +20,6 @@ export class ExpressionUtility {
   private globalObjectInstance = globalObject;
   private instanceUtility = instanceUtility;
   private eventAggregator = eventBus;
-  private metaUtility = metaUtility;
 
   /**
    * Calls the value of the attribute instance in the local client based on the UUID of the meta attribute.
@@ -278,15 +277,14 @@ export class ExpressionUtility {
     }
   }
 
-  /**
-   * Retrieves the file from the local storage or fetches it from the server if not found.
-   *
-   * @param {string} fileUUID - The UUID of the file.
-   * @returns {Promise<string>} - A promise resolving to the file content as a string.
-   */
-  async getFile(fileUUID: UUID): Promise<string> {
-    const str = this.metaUtility.getFileByUUID(fileUUID);
-    return str;
+  /** A file as a data-URL, for image and icon vizReps. Same contract as the modeling client. */
+  async getImageByUUID(fileUUID: UUID): Promise<string> {
+    return (await fileUtility.getDataUrl(fileUUID)) ?? "";
+  }
+
+  /** A file as raw bytes, for the glTF and STL loaders. Same contract as the modeling client. */
+  async getGltfByUUID(fileUUID: UUID): Promise<ArrayBuffer> {
+    return (await fileUtility.getArrayBuffer(fileUUID)) ?? new ArrayBuffer(0);
   }
 }
 

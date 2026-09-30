@@ -1,5 +1,5 @@
 import { UUID } from "@gds/models/meta/Metamodel_metaobjects.structure";
-import { globalObject } from "@/engine/global-definition";
+import { globalObject, CachedFile } from "@/engine/global-definition";
 import { logger } from "./logger";
 import { backendService } from "./backend-service";
 
@@ -8,36 +8,21 @@ import { backendService } from "./backend-service";
  * keyed by uuid.
  *
  * VizReps request the same file on every redraw, so fetching it once and keeping
- * the decoded content in memory is what makes the live preview usable.
+ * it in memory is what makes the live preview usable.
+ *
+ * The file is kept as it came from the server and only converted on request, so
+ * that a binary model (GLB, STL) reaches its loader byte for byte: decoding it as
+ * text, which the cache used to do for every `application/octet-stream` file,
+ * replaces each invalid UTF-8 sequence and corrupts it.
  */
 export class FileUtility {
   private globalObjectInstance = globalObject;
   private logger = logger;
 
-  /** Put `content` in the cache under `uuid`, replacing anything already there. */
-  async addFile(uuid: UUID, content: string) {
-    if (this.globalObjectInstance.localFiles.has(uuid)) {
-      this.logger.log(`File with UUID ${uuid} already exists. Overwriting...`, "warn");
-    } else {
-      this.logger.log(`Adding new file with UUID ${uuid}.`, "info");
-    }
-    this.globalObjectInstance.localFiles.set(uuid, content);
-  }
-
-  /**
-   * The cached content for `uuid`, fetching and caching it on a miss.
-   *
-   * Text-based formats (glTF JSON, raw binary streams) are decoded as text; the
-   * rest become data URLs, which is what a texture is assigned from.
-   */
-  async getFile(uuid: UUID): Promise<string | undefined> {
-    this.logger.log(`Retrieving file with UUID ${uuid}.`, "info");
-
+  /** The cache entry for `uuid`, fetching and caching the file on a miss. */
+  private async getEntry(uuid: UUID): Promise<CachedFile | undefined> {
     const cached = this.globalObjectInstance.localFiles.get(uuid);
-    if (cached !== undefined) {
-      this.logger.log(`File with UUID ${uuid} found in local storage.`, "info");
-      return cached;
-    }
+    if (cached !== undefined) return cached;
 
     this.logger.log(
       `File with UUID ${uuid} not found in local storage. Fetching from server...`,
@@ -49,16 +34,28 @@ export class FileUtility {
       return undefined;
     }
 
-    const isText =
-      file.type.includes("model/gltf+json") || file.type.includes("application/octet-stream");
-    const content = isText ? await file.text() : await readAsDataUrl(file);
-
-    await this.addFile(uuid, content);
+    const entry: CachedFile = { file };
+    this.globalObjectInstance.localFiles.set(uuid, entry);
     this.logger.log(
       `File with UUID ${uuid} fetched from server and added to local storage.`,
       "info",
     );
-    return content;
+    return entry;
+  }
+
+  /** The file as a data URL, which is what a texture or an icon is assigned from. */
+  async getDataUrl(uuid: UUID): Promise<string | undefined> {
+    const entry = await this.getEntry(uuid);
+    if (!entry) return undefined;
+    // Remembered, since a texture is re-read on every redraw of the preview.
+    entry.dataUrl ??= await readAsDataUrl(entry.file);
+    return entry.dataUrl;
+  }
+
+  /** The file as raw bytes, for the glTF and STL loaders. */
+  async getArrayBuffer(uuid: UUID): Promise<ArrayBuffer | undefined> {
+    const entry = await this.getEntry(uuid);
+    return entry ? await entry.file.arrayBuffer() : undefined;
   }
 }
 

@@ -15,6 +15,15 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { TransformControls } from "three/examples/jsm/controls/TransformControls.js";
 
 /**
+ * A file a VizRep pulled in from the server: the file itself, and its data URL
+ * once something asked for it (see `file-utility`).
+ */
+export interface CachedFile {
+  file: globalThis.File;
+  dataUrl?: string;
+}
+
+/**
  * Port of the old `global_definitions.ts` (the shared, mutable Three.js state
  * holder). The Aurelia `@singleton()` decorator is dropped; instead this module
  * exports a single instance `globalObject` (the composition root + every engine
@@ -87,7 +96,7 @@ export class GlobalDefinition {
   ports: Port[];
   mockClass: Class;
   mockClassInstance: ClassInstance;
-  localFiles: Map<string, string>;
+  localFiles: Map<string, CachedFile>;
 
   constructor() {
     this.selectedTab = 0;
@@ -133,7 +142,7 @@ export class GlobalDefinition {
     this.relationClasses = [];
     this.ports = [];
     this.sceneTypes = [];
-    this.localFiles = new Map<string, string>();
+    this.localFiles = new Map<string, CachedFile>();
   }
 }
 
