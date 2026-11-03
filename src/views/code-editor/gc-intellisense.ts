@@ -38,6 +38,12 @@ declare type ExpressionUtility = {
   getImageByUUID(fileUUID: string): Promise<string>;
   /** Retrieves an uploaded file as raw bytes, for graphic_gltf or graphic_stl. */
   getGltfByUUID(fileUUID: string): Promise<ArrayBuffer>;
+  /** Writes a line to the log window. Status is a log status; "error" also raises the snackbar. Modeling client only, for procedures. */
+  log(message: string, status?: string): void;
+  /** Fetches every scene into the local client, so the other calls can reach referenced instances in other scenes. Modeling client only, for procedures. */
+  loadAllSceneInstances(): Promise<void>;
+  /** Retrieves any instance in the local client based on its UUID. Modeling client only, for procedures. */
+  getInstanceByUUID(instanceUUID: string): Promise<any>;
 };
 
 /**

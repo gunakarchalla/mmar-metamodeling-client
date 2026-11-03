@@ -670,7 +670,11 @@ references; `"Column"` means a table column; `"read_right"` / `"write_right"` /
 `"delete_right"` / `"can_create_instance"` mean usergroup rights (plain uuid
 arrays, which is why `ParentChildSelect` resolves each one via
 `getObjectFromUuid`). Role-ish types show Type/Min/Max columns;
-`"Attribute"`/`"Column"` show the UI-component dropdown.
+`"Attribute"`/`"Column"` show the UI-component dropdown: Text, Multi-line or Button for an
+attribute without facets, Dropdown or Slider for one with them. Multi-line (`multi-line`) is
+for values with line breaks, such as a mechanism's code. A column's UI component lives on
+the column in `has_table_attribute`, not on its attribute, and its rows are copies, so the
+dropdown reads from and writes to the column itself.
 
 `ModalObjectSelect` is the "add" dialog: a searchable table of candidates,
 single- or multi-select; on confirm it calls `addChild(uuid, type)` for each pick.
@@ -1032,7 +1036,7 @@ container, so the in-container hostname `mmar-server:8000` would not resolve for
 
 ## Tests
 
-`npm run test` → **231 tests across 27 files**, all green. Vitest defaults to the
+`npm run test` → **239 tests across 29 files**, all green. Vitest defaults to the
 `node` environment; the component suites opt into jsdom per-file with a
 `// @vitest-environment jsdom` docblock — cheaper than a global switch, and it keeps
 the blast radius small. [src/test-setup.ts](src/test-setup.ts) imports

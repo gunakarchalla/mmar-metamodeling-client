@@ -88,7 +88,9 @@ function MinMaxCell({
  * The choice depends on whether the attribute defines facets — a `|`-separated
  * list of allowed values. With facets the value comes from a fixed set, so only
  * a dropdown or a slider makes sense; without them it is free text, so only a
- * text field or a button does. The other options stay visible but disabled.
+ * text field, a multi-line text field or a button does. The other options stay
+ * visible but disabled. Multi-line is for values with line breaks, such as a
+ * mechanism's code, which a single-line text field would join into one line.
  */
 function UiComponentCell({
   row,
@@ -108,6 +110,9 @@ function UiComponentCell({
     >
       <MenuItem value="text" disabled={hasFacets}>
         Text
+      </MenuItem>
+      <MenuItem value="multi-line" disabled={hasFacets}>
+        Multi-line
       </MenuItem>
       <MenuItem value="dropdown" disabled={!hasFacets}>
         Dropdown
@@ -163,9 +168,13 @@ export default function ParentChildSelect({
     if (isRoleList) return rawItems.flatMap((role) => getObjectsFromRole(role));
 
     // Table columns show their attribute. The store keeps their `sequence` in step with
-    // their position (see addColumn / removeColumn and moveRow below).
+    // their position (see addColumn / removeColumn and moveRow below). The UI component
+    // belongs to the column, not to the attribute, which other columns may share.
     if (childType === "Column") {
-      return rawItems.map((column, index) => new ColumnStructure({ ...column.attribute }, index + 1).get_attribute());
+      return rawItems.map((column, index) => ({
+        ...new ColumnStructure({ ...column.attribute }, index + 1).get_attribute(),
+        ui_component: column.ui_component,
+      }));
     }
 
     // Rights store bare uuids; resolve each to the object it names.
@@ -364,7 +373,9 @@ export default function ParentChildSelect({
                     <UiComponentCell
                       row={item}
                       onChange={(value) => {
-                        item.ui_component = value;
+                        // A column's row is a copy, so the edit goes to the column itself.
+                        const target = childType === "Column" ? rawItems[indexOf(item.uuid)] : item;
+                        target.ui_component = value;
                         commitSelected();
                       }}
                     />
