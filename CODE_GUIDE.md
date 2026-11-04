@@ -275,7 +275,8 @@ of this whole codebase:
 
 #### Open tabs (the VS Code strip)
 
-The store holds `openTabs: OpenTab[]` (ordered as opened) plus `activeTabUuid`.
+The store holds `openTabs: OpenTab[]` (in strip order: as opened, until the user drags a
+tab elsewhere) plus `activeTabUuid`.
 An `OpenTab` is `{ uuid, type, object, innerTab, dirty }` — **its own working
 copy** of the object, plus which sub-tab it was left on. The rules:
 
@@ -293,6 +294,16 @@ copy** of the object, plus which sub-tab it was left on. The rules:
   UI, and by the time the store is called the decision is made. Closing the
   active tab focuses the neighbour that slid into its slot (else the one to its
   left); closing the last one clears the selection.
+- `moveTab(uuid, position)` reorders the strip; [ObjectTabs](src/views/object-tabs/ObjectTabs.tsx)
+  calls it when a dragged tab is dropped, then activates that tab. Everything about a
+  tab is keyed by uuid, so the array order means nothing but strip order, and closing
+  picks the neighbour the user sees. Every tab is `TAB_WIDTH` wide, so the ✕ buttons sit
+  at a fixed spacing and a row of tabs closes with repeated clicks on one spot. A middle
+  click closes a tab through the same unsaved-changes prompt as the ✕. The drag itself
+  is [useTabDrag](src/views/object-tabs/useTabDrag.ts), a copy of the modeling
+  client's: it moves an inner "face" box, not the MUI `Tab`, because `Tabs` re-measures
+  the active `Tab` after every render and would scroll to chase it. For the same reason
+  MUI's sliding indicator is hidden and each face draws its own underline.
 - `deselectObject()` now means "nothing open at all" (it calls `closeAllTabs`).
   Its only caller is `resetObjects()`, i.e. the full refresh — which replaces
   every collection the working copies came from, so keeping them would be wrong.
@@ -427,6 +438,7 @@ against the original.
 | [auth-token.ts](src/resources/services/auth-token.ts) | bearer-token storage + the `Authorization` header |
 | [vizrep-icon.ts](src/resources/services/vizrep-icon.ts) | scrapes a list icon out of a VizRep — see [gotchas](#gotchas) |
 | [session-reset.ts](src/resources/services/session-reset.ts) | empties the stores on sign-out — see [session teardown](#session-teardown-signing-out) |
+| [metamodel-file.ts](src/resources/services/metamodel-file.ts) | checks and summarises a metamodel file before File ▸ Load Metamodel sends it |
 
 Plus three small helpers in [src/resources/util/](src/resources/util/):
 `textify.ts` (port of the Aurelia value converter), `describe-error.ts`
@@ -702,9 +714,24 @@ Both it and `ParentChildSelect` match the search term against name, description
 
 TopNavBar has six menus — File, View, Edit, Diagram, Settings, Algorithms —
 which are intentionally **disabled stubs**: they open, but every item is inert,
-matching the original. The one exception is **Edit ▸ Undo/Redo**, which shares the
-toolbar arrows' [per-tab history](#undoredo-per-tab-history) (an item is live iff
-it carries an `action`). The other working controls are the toolbar's Undo/Redo
+matching the original. The exceptions are **Edit ▸ Undo/Redo**, which shares the
+toolbar arrows' [per-tab history](#undoredo-per-tab-history), and **File ▸ Load
+Metamodel** (an item is live iff it carries an `action`).
+
+**Load Metamodel** opens
+[DialogLoadMetamodel.tsx](src/views/top-nav-bar/DialogLoadMetamodel.tsx). A
+metamodel file is one scene type as JSON with everything it contains nested
+inside it, the shape of the files under `mmar-database/example_metamodels`.
+[metamodel-file.ts](src/resources/services/metamodel-file.ts) checks its outline
+as soon as it is chosen, and the dialog shows what it holds. A scene type whose
+uuid is already loaded is stopped there. On confirm,
+`backendService.importMetamodel` POSTs the file whole to `metamodel/sceneTypes`,
+which creates it in one transaction. It then reloads every metamodel collection
+*without* `resetObjects()`, so open tabs and their unsaved edits survive, and the
+dialog opens the new scene type in a tab. A refused import keeps the dialog open
+with the server's reason.
+
+The other working controls are the toolbar's Undo/Redo
 arrows, Refresh (`triggerRefresh("Refresh button")`, but confirms first when any
 open tab has unsaved changes — a full refresh discards them all), Save (persist +
 refresh), an admin-only Test button that `console.log`s the selection, and
@@ -1053,7 +1080,7 @@ container, so the in-container hostname `mmar-server:8000` would not resolve for
 
 ## Tests
 
-`npm run test` → **257 tests across 30 files**, all green. Vitest defaults to the
+`npm run test` → **286 tests across 33 files**, all green. Vitest defaults to the
 `node` environment; the component suites opt into jsdom per-file with a
 `// @vitest-environment jsdom` docblock — cheaper than a global switch, and it keeps
 the blast radius small. [src/test-setup.ts](src/test-setup.ts) imports

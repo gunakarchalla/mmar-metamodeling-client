@@ -1,6 +1,7 @@
 import { Suspense, lazy, type JSX } from "react";
-import { TextField, Box, Stack, CircularProgress } from "@mui/material";
+import { TextField, Box, Stack } from "@mui/material";
 import { useSelectedObjectStore } from "@/resources/store/selectedObjectStore";
+import ChunkFallback from "@/views/common/ChunkFallback";
 import { BoundText, CoordFieldset } from "./fields";
 import GeneralTabClass from "./GeneralTabClass";
 import GeneralTabAttribute from "./GeneralTabAttribute";
@@ -16,15 +17,18 @@ import GeneralTabFile from "./GeneralTabFile";
  */
 
 /**
- * The two heavy libraries reach the bundle through exactly these two subtrees:
+ * The two heavy libraries reach the bundle through exactly these subtrees:
  *
  *   VizRepGeometryEditor → the code editor (Monaco) and the 3D canvas (three.js)
  *   GeneralTabProcedure  → the code editor (Monaco)
+ *   GeneralTabAttribute  → the code editor (Monaco), for a mechanism's default
+ *                          value; split inside that file, since the rest of the
+ *                          attribute section is light
  *
- * Both are shown only for some types, so importing them eagerly made every user
+ * All are shown only for some types, so importing them eagerly made every user
  * pay the download and parse cost up front — before signing in, and even if they
- * never opened a class, port or procedure. Both have to be split for it to
- * work: leaving either one eager keeps Monaco in the main chunk.
+ * never opened a class, port or procedure. All have to be split for it to
+ * work: leaving any one eager keeps Monaco in the main chunk.
  */
 const VizRepGeometryEditor = lazy(() => import("./vizrep-editor/VizRepGeometryEditor"));
 const GeneralTabProcedure = lazy(() => import("./GeneralTabProcedure"));
@@ -35,18 +39,6 @@ const VIZREP_TYPES = ["Class", "RelationClass", "Port"];
 /** Height of the VizRep block: 300px editor + 44px buttons + 400px canvas. */
 const VIZREP_HEIGHT = 744;
 const PROCEDURE_HEIGHT = 300;
-
-/**
- * Stands in while a lazily-loaded chunk downloads, reserving the height the real
- * block occupies so the surrounding form does not jump when it lands.
- */
-function ChunkFallback({ height }: { height: number }) {
-  return (
-    <Box sx={{ height, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <CircularProgress size={24} />
-    </Box>
-  );
-}
 
 /** The section shown below the shared fields, chosen by the object's type. */
 const TYPE_SECTIONS: Record<string, () => JSX.Element | null> = {

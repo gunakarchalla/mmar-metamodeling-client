@@ -11,6 +11,11 @@ their own fields, the children they contain, the references between them, and �
 for the concepts that are drawn in 3D — their **VizRep**, the JavaScript that
 renders them, with a live preview.
 
+A whole metamodel can also be imported from a JSON file through **File ▸ Load
+Metamodel**: one scene type with everything nested in it, like the files under
+`mmar-database/example_metamodels`. It is saved to the server and opened in a
+tab.
+
 ## Architecture
 
 There is no router. What you see is decided by a selection store and by a strip

@@ -5,6 +5,7 @@ import type { Attribute } from "@gds/models/meta/Metamodel_attributes.structure"
 import type { AttributeType } from "@gds/models/meta/Metamodel_attributetypes.structure";
 import { SceneInstance } from "@gds/models/instance/Instance_scenes.structure";
 import {
+  LISTED_META_TYPES,
   META_TYPES,
   MetaTypeName,
   apiPathOf,
@@ -14,6 +15,7 @@ import {
 import { useSelectedObjectStore } from "@/resources/store/selectedObjectStore";
 import { useLogStore } from "@/resources/store/logStore";
 import { useAuthStore } from "@/resources/store/authStore";
+import { describeError } from "@/resources/util/describe-error";
 import { apiFetch, errorMessageOf } from "./api";
 import { attributeSaveProblems, attributeTypeSaveProblems } from "./metamodel-constraints";
 import { authHeaders } from "./auth-token";
@@ -73,6 +75,17 @@ const DEFAULT_ATTRIBUTE_TYPE_REGEX =
 
 /** Human-readable plural used in error messages, e.g. "scene types". */
 const labelOf = (name: MetaTypeName) => META_TYPES[name].label.toLowerCase();
+
+/**
+ * The collections an imported metamodel can add to: every listed one except
+ * users and user groups, which are not part of a metamodel.
+ */
+const METAMODEL_TYPES = LISTED_META_TYPES.filter((name) => !META_TYPES[name].adminOnly);
+
+/** What `importMetamodel` reports back to the dialog that called it. */
+export type MetamodelImportResult =
+  | { ok: true; sceneType: { uuid: UUID; name: string } }
+  | { ok: false; error: string };
 
 export class BackendService {
   /** Is the server reachable? Also the point at which an expired token logs out. */
@@ -353,6 +366,46 @@ export class BackendService {
     } catch (error) {
       log(`Error setting password: ${error}`, "error");
       return false;
+    }
+  }
+
+  /**
+   * Import a whole metamodel: one scene type with everything nested in it, as
+   * read from a metamodel file (see `metamodel-file.ts`).
+   *
+   * The server creates the scene type and every nested object it does not hold
+   * yet in a single transaction, so a refused import leaves nothing behind.
+   *
+   * Afterwards every collection the import can add to is reloaded. This is
+   * deliberately not the full refresh: that resets the store, which closes every
+   * open tab and throws away unsaved edits to objects the import never touched.
+   *
+   * Reports its outcome as well as logging it, because the dialog that calls it
+   * stays open on a failure and shows the reason there.
+   */
+  async importMetamodel(metamodel: Record<string, unknown>): Promise<MetamodelImportResult> {
+    try {
+      const headers = authHeaders();
+      if (!headers) return { ok: false, error: "Sign in to load a metamodel." };
+
+      const response = await apiFetch(apiPathOf("SceneType")!, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(metamodel),
+      });
+      if (!response.ok) {
+        throw new Error(`${response.statusText} - ${await errorMessageOf(response)}`);
+      }
+
+      // The server may have assigned the uuid, so it is read from the response.
+      const created = (await response.json()) as { uuid: UUID; name: string };
+      log(`Metamodel ${created.name} loaded`, "info");
+
+      await Promise.all(METAMODEL_TYPES.map((type) => this.loadObjects(type)));
+      return { ok: true, sceneType: { uuid: created.uuid, name: created.name } };
+    } catch (error) {
+      log(`Error loading metamodel: ${describeError(error)}`, "error");
+      return { ok: false, error: describeError(error) };
     }
   }
 

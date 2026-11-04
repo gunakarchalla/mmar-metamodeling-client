@@ -1,11 +1,31 @@
-import { Typography, Stack, TextField, MenuItem } from "@mui/material";
+import { Suspense, lazy } from "react";
+import {
+  Typography,
+  Stack,
+  TextField,
+  MenuItem,
+  FormControl,
+  FormLabel,
+  FormHelperText,
+} from "@mui/material";
 import { facets_not_matching_pattern, value_matches_pattern } from "@gds";
 import { Attribute } from "@gds/models/meta/Metamodel_attributes.structure";
+import { MECHANISM_ATTRIBUTE_TYPE_UUID } from "@/constants";
 import FieldsetSection from "@/views/common/FieldsetSection";
 import ObjectPreviewCard from "@/views/common/ObjectPreviewCard";
+import ChunkFallback from "@/views/common/ChunkFallback";
 import { BoundNumber } from "./fields";
 import InlineObjectPicker from "./InlineObjectPicker";
 import { useSelectedObjectForm } from "./useSelectedObjectForm";
+
+// Monaco is only needed for mechanism attributes, so it is split out rather than
+// riding along with every attribute (see the note on code-splitting in GeneralTab).
+const BoundCodeEditor = lazy(() => import("@/views/code-editor/BoundCodeEditor"));
+
+const MECHANISM_EDITOR_HEIGHT = 300;
+
+const DEFAULT_VALUE_INVALID =
+  "The default value must match the regular expression of the attribute type.";
 
 /**
  * Attribute-only fields: which attribute type it has, how many values it may
@@ -14,6 +34,11 @@ import { useSelectedObjectForm } from "./useSelectedObjectForm";
  * Facets are a `|`-separated list of the values the attribute may take: the choices of
  * a dropdown, or the minimum, maximum and step of a slider. Whether they are present
  * decides how the default value is entered — picked from the facets, or typed freely.
+ *
+ * A typed-in default of a Mechanism attribute is JavaScript — the function the modeling
+ * client's animator runs — so it is edited in a code editor rather than a text area.
+ * With facets it is still picked from them: the facets are what the modeling client
+ * offers, so a default outside them could never be chosen again once changed.
  *
  * The default value and every facet are checked against the attribute type's regular
  * expression as they are typed, and the attribute cannot be saved while one of them
@@ -39,6 +64,7 @@ export default function GeneralTabAttribute() {
   const facets = attribute.facets ? attribute.facets.split("|") : [];
   const attributeType = attribute.attribute_type;
   const pattern = attributeType?.regex_value;
+  const isMechanism = attributeType?.uuid === MECHANISM_ATTRIBUTE_TYPE_UUID;
 
   const defaultValueInvalid = !value_matches_pattern(attribute.default_value ?? "", pattern);
   const invalidFacets = facets_not_matching_pattern(attribute.facets, pattern);
@@ -75,17 +101,31 @@ export default function GeneralTabAttribute() {
           size="small"
         />
 
-        {facets.length === 0 ? (
+        {facets.length === 0 && isMechanism ? (
+          <FormControl error={defaultValueInvalid} fullWidth>
+            <FormLabel sx={{ typography: "caption", mb: 0.5 }}>Default value</FormLabel>
+            <Suspense fallback={<ChunkFallback height={MECHANISM_EDITOR_HEIGHT} />}>
+              {/* Keyed by attribute: the tab is not remounted when the selection
+                  changes, and a shared editor would let Ctrl+Z on one attribute
+                  undo back into the code of the one selected before it. */}
+              <BoundCodeEditor
+                key={attribute.uuid}
+                value={attribute.default_value ?? ""}
+                onChange={(value) => update("default_value", value)}
+                height={MECHANISM_EDITOR_HEIGHT}
+                error={defaultValueInvalid}
+                ariaLabel="Default value"
+              />
+            </Suspense>
+            {defaultValueInvalid && <FormHelperText>{DEFAULT_VALUE_INVALID}</FormHelperText>}
+          </FormControl>
+        ) : facets.length === 0 ? (
           <TextField
             label="Default value"
             value={attribute.default_value ?? ""}
             onChange={(event) => update("default_value", event.target.value)}
             error={defaultValueInvalid}
-            helperText={
-              defaultValueInvalid
-                ? "The default value must match the regular expression of the attribute type."
-                : undefined
-            }
+            helperText={defaultValueInvalid ? DEFAULT_VALUE_INVALID : undefined}
             multiline
             rows={3}
             fullWidth
@@ -98,11 +138,7 @@ export default function GeneralTabAttribute() {
             value={attribute.default_value ?? ""}
             onChange={(event) => update("default_value", event.target.value)}
             error={defaultValueInvalid}
-            helperText={
-              defaultValueInvalid
-                ? "The default value must match the regular expression of the attribute type."
-                : undefined
-            }
+            helperText={defaultValueInvalid ? DEFAULT_VALUE_INVALID : undefined}
             fullWidth
             size="small"
           >

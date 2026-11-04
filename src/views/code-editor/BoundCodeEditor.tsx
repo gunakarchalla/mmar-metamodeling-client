@@ -17,11 +17,17 @@ export default function BoundCodeEditor({
   onChange,
   language = "javascript",
   height = 300,
+  error = false,
+  ariaLabel,
 }: {
   value: string;
   onChange: (value: string) => void;
   language?: string;
   height?: number;
+  /** Shown as a rejected field: the border turns red, the value is kept and typing goes on. */
+  error?: boolean;
+  /** The editor's accessible name. Monaco's input cannot be tied to an outside `<label>`. */
+  ariaLabel?: string;
 }) {
   // Follow the application's palette rather than pinning a theme.
   const monacoTheme = useTheme().palette.mode === "dark" ? "vs-dark" : "vs";
@@ -39,7 +45,7 @@ export default function BoundCodeEditor({
         pb: "14px",
         boxSizing: "border-box",
         border: "1px solid",
-        borderColor: "divider",
+        borderColor: error ? "error.main" : "divider",
         borderRadius: 1,
       }}
     >
@@ -49,6 +55,7 @@ export default function BoundCodeEditor({
         value={value}
         onChange={(v) => onChange(v ?? "")}
         options={{
+          ariaLabel,
           minimap: { enabled: false },
           automaticLayout: true,
           fontSize: 13,

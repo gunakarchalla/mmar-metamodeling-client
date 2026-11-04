@@ -157,6 +157,34 @@ describe("selectedObjectStore open tabs", () => {
     expect(store().selectedObject?.uuid).toBe("st-1");
   });
 
+  it("moveTab reorders the strip, clamped to its ends, and leaves the selection alone", () => {
+    store().setSelectedObject("st-1");
+    store().setSelectedObject("st-2");
+    store().setSelectedObject("st-3");
+    store().moveTab("st-3", 0);
+    expect(store().openTabs.map((t) => t.uuid)).toEqual(["st-3", "st-1", "st-2"]);
+    expect(store().activeTabUuid).toBe("st-3");
+
+    store().moveTab("st-3", 99);
+    expect(store().openTabs.map((t) => t.uuid)).toEqual(["st-1", "st-2", "st-3"]);
+  });
+
+  it("moveTab ignores an unknown uuid", () => {
+    store().setSelectedObject("st-1");
+    const before = store().openTabs;
+    store().moveTab("nope", 0);
+    expect(store().openTabs).toBe(before);
+  });
+
+  it("after a reorder, closing the active tab focuses its neighbour on the strip", () => {
+    store().setSelectedObject("st-1");
+    store().setSelectedObject("st-2");
+    store().setSelectedObject("st-3");
+    store().moveTab("st-3", 0); // strip: 3 1 2
+    store().closeTab("st-3");
+    expect(store().activeTabUuid).toBe("st-1");
+  });
+
   it("closing a background tab leaves the selection alone", () => {
     store().setSelectedObject("st-1");
     store().setSelectedObject("st-2");

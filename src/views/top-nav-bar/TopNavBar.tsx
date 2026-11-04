@@ -22,13 +22,16 @@ import {
   selectCanUndo,
   useSelectedObjectStore,
 } from "@/resources/store/selectedObjectStore";
+import DialogLoadMetamodel from "./DialogLoadMetamodel";
+
+type MenuAction = "undo" | "redo" | "loadMetamodel";
 
 interface MenuItemDef {
   label: string;
   icon: string;
   disabled?: boolean;
-  /** Items that do something name a store action; the rest are placeholders. */
-  action?: "undo" | "redo";
+  /** Items that do something name an action; the rest are placeholders. */
+  action?: MenuAction;
 }
 interface MenuDef {
   name: string;
@@ -38,14 +41,16 @@ interface MenuDef {
 
 /**
  * The menu bar. Undo and Redo under Edit share the toolbar arrows' per-tab
- * history; every other item is a placeholder for functionality this client does
- * not implement, kept visible so the menus match the modelling client's.
+ * history, and File ▸ Load Metamodel imports a metamodel file; every other item
+ * is a placeholder for functionality this client does not implement, kept
+ * visible so the menus match the modelling client's.
  */
 const MENUS: MenuDef[] = [
   {
     name: "File",
     icon: "folder",
     items: [
+      { label: "Load Metamodel", icon: "upload_file", action: "loadMetamodel" },
       { label: "Save SceneInstance", icon: "save", disabled: true },
       { label: "Save SceneInstance As", icon: "save_as", disabled: true },
       { label: "Export SceneInstance As", icon: "folder_special", disabled: true },
@@ -89,20 +94,29 @@ const MENUS: MenuDef[] = [
   },
 ];
 
-function MenuEntry({ menu }: { menu: MenuDef }) {
+function MenuEntry({
+  menu,
+  onLoadMetamodel,
+}: {
+  menu: MenuDef;
+  onLoadMetamodel: () => void;
+}) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
   // Looked up by name so these hooks stay unconditional — a menu with no live
   // item simply ignores them. Booleans, so a menu re-renders only when a step
   // becomes available or stops being so.
-  const enabled = {
+  const enabled: Record<MenuAction, boolean> = {
     undo: useSelectedObjectStore(selectCanUndo),
     redo: useSelectedObjectStore(selectCanRedo),
+    // Importing writes to the server, so it needs someone signed in.
+    loadMetamodel: useAuthStore((s) => s.currentUser != null),
   };
-  const run = {
+  const run: Record<MenuAction, () => void> = {
     undo: useSelectedObjectStore((s) => s.undo),
     redo: useSelectedObjectStore((s) => s.redo),
+    loadMetamodel: onLoadMetamodel,
   };
 
   return (
@@ -156,6 +170,7 @@ export default function TopNavBar({ onOpenLogin }: Props) {
   // edits included — so it confirms when any tab has some, the way the Refresh
   // button does for the same reason.
   const [confirmSignOut, setConfirmSignOut] = useState(false);
+  const [loadMetamodelOpen, setLoadMetamodelOpen] = useState(false);
 
   function requestSignOut() {
     if (useSelectedObjectStore.getState().hasUnsavedTabs()) {
@@ -179,7 +194,11 @@ export default function TopNavBar({ onOpenLogin }: Props) {
 
         <Box sx={{ display: "flex", flexGrow: 1 }}>
           {MENUS.map((menu) => (
-            <MenuEntry key={menu.name} menu={menu} />
+            <MenuEntry
+              key={menu.name}
+              menu={menu}
+              onLoadMetamodel={() => setLoadMetamodelOpen(true)}
+            />
           ))}
         </Box>
 
@@ -220,6 +239,11 @@ export default function TopNavBar({ onOpenLogin }: Props) {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <DialogLoadMetamodel
+        open={loadMetamodelOpen}
+        onClose={() => setLoadMetamodelOpen(false)}
+      />
     </AppBar>
   );
 }

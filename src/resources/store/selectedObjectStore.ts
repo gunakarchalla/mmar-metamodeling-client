@@ -207,6 +207,12 @@ export interface SelectedObjectState {
   // --- open tabs ---
   activateTab: (uuid: UUID) => void;
   closeTab: (uuid: UUID) => void;
+  /**
+   * Move a tab to `position` on the strip (dragging it there). Tabs are keyed by uuid,
+   * so only their order changes; `closeTab`'s "neighbour that slid into this slot"
+   * then follows the order the user sees.
+   */
+  moveTab: (uuid: UUID, position: number) => void;
   closeAllTabs: () => void;
   markTabClean: (uuid: UUID) => void;
   getTab: (uuid: UUID) => OpenTab | undefined;
@@ -763,6 +769,18 @@ export const useSelectedObjectStore = create<SelectedObjectState>((set, get) => 
         revision: s.revision + 1,
       }));
     },
+
+    moveTab: (uuid, position) =>
+      set((s) => {
+        const from = s.openTabs.findIndex((t) => t.uuid === uuid);
+        if (from === -1) return s;
+        const to = Math.max(0, Math.min(position, s.openTabs.length - 1));
+        if (from === to) return s;
+        const openTabs = [...s.openTabs];
+        const [tab] = openTabs.splice(from, 1);
+        openTabs.splice(to, 0, tab);
+        return { openTabs };
+      }),
 
     closeAllTabs: () =>
       set((s) => ({
