@@ -14,6 +14,11 @@
  * Copy `obj` into a fresh object with the same prototype and the same field
  * values. Cheap, and enough to make React subscribers re-render after an
  * in-place mutation, because the *reference they compare* has changed.
+ *
+ * Only the top level gets a new identity. Nested arrays and objects are shared
+ * with `obj`, so anything memoised on one of them still sees the old reference
+ * after it was edited in place: derive a new array from it rather than passing
+ * it on (see `ParentChildSelect`).
  */
 export function reref<T>(obj: T): T {
   if (obj === null || obj === undefined || typeof obj !== "object") return obj;

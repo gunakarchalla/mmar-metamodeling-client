@@ -231,7 +231,7 @@ export interface SelectedObjectState {
   // --- children of the selected object ---
   addChild: (uuid: UUID, type: string) => void;
   removeChild: (uuid: UUID, type?: string) => void;
-  updateMinMax: (uuid: UUID, min: number, max: number) => void;
+  updateMinMax: (uuid: UUID, type: string, min: number, max: number) => void;
 }
 
 /**
@@ -422,7 +422,10 @@ export const useSelectedObjectStore = create<SelectedObjectState>((set, get) => 
       return;
     }
     const parent = selected<ChildContainer>();
-    parent[field].push(child);
+    // A copy, for the same reason the working copy is one: the child's row is edited
+    // in place (its position, its UI component), and that edit belongs to this
+    // parent, not to the loaded object or to every other parent it was added to.
+    parent[field].push(deepClone(child));
     log(`Added ${type} ${uuid} to selected object ${parent.uuid}`, "info");
     commit();
   };
@@ -650,9 +653,13 @@ export const useSelectedObjectStore = create<SelectedObjectState>((set, get) => 
         return;
       }
 
-      // Edit a copy, so an in-progress rename is not echoed in the left
-      // navigation until the save response replaces the collection entry.
-      const workingCopy = reref(stored) as SelectableObject;
+      // Edit a deep copy, so nothing done in the tab reaches the loaded collection
+      // before the save response replaces its entry: not a rename, which the left
+      // navigation would echo, and not a structural edit either. The mutators edit
+      // nested lists in place (`classes`, a role's references, the table columns),
+      // and a shallow copy would share those with the collection entry, where an
+      // unsaved add would survive "Discard changes".
+      const workingCopy = deepClone(stored) as SelectableObject;
       set((s) => ({
         selectedObject: workingCopy,
         type,
@@ -909,36 +916,35 @@ export const useSelectedObjectStore = create<SelectedObjectState>((set, get) => 
     },
 
     /**
-     * Set the cardinality of the reference identified by `uuid`, wherever it
-     * sits: on an attribute type's single role, or on either end of a relation
-     * class.
+     * Set the cardinality of the reference to `uuid` in the list `type` names:
+     * an attribute type's single role ("Role"), or one end of a relation class
+     * ("Source"/"Destination"). The end has to be named because a relation
+     * class may link a class to itself, which puts the same uuid in both roles.
      */
-    updateMinMax: (uuid, min, max) => {
+    updateMinMax: (uuid, type, min, max) => {
       const object = get().selectedObject;
       if (!object) {
         console.warn("No selected object to update");
         return;
       }
 
-      const roles: Role[] = [];
-      switch (get().type) {
-        case "AttributeType":
-        case "Role": {
-          const role = (object as AttributeType).role;
-          if (role) roles.push(role);
+      let role: Role | undefined;
+      switch (type) {
+        case "Role":
+          role = (object as AttributeType).role;
           break;
-        }
-        case "RelationClass": {
-          const relationClass = object as Relationclass;
-          roles.push(relationClass.role_from, relationClass.role_to);
+        case "Source":
+          role = (object as Relationclass).role_from;
           break;
-        }
+        case "Destination":
+          role = (object as Relationclass).role_to;
+          break;
         default:
-          console.warn(`Unsupported type for updateMinMax: ${get().type}`);
+          console.warn(`Unsupported type for updateMinMax: ${type}`);
           return;
       }
 
-      if (!roles.some((role) => setReferenceBounds(role, uuid, min, max))) {
+      if (!role || !setReferenceBounds(role, uuid, min, max)) {
         console.warn(`Reference with uuid ${uuid} not found`);
         return;
       }

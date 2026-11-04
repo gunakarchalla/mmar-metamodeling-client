@@ -162,7 +162,13 @@ export default function ParentChildSelect({
     [items, revision],
   );
 
-  /** The rows to display, resolved from whatever the field actually stores. */
+  /**
+   * The rows to display, resolved from whatever the field actually stores.
+   *
+   * Always a new array. For a list field `rawItems` is the live array the store
+   * pushes into, and `useObjectTable` memoises on identity, so handing it on would
+   * keep showing the rows from before an add until the table remounted.
+   */
   const rows: ObjectRow[] = useMemo(() => {
     // Roles store references; show the objects they point at.
     if (isRoleList) return rawItems.flatMap((role) => getObjectsFromRole(role));
@@ -187,7 +193,7 @@ export default function ParentChildSelect({
 
     // Otherwise the field already holds the child objects. Lists the user cannot
     // sort carry an explicit order instead.
-    return sortable ? rawItems : [...rawItems].sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+    return sortable ? [...rawItems] : [...rawItems].sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rawItems, childType, isRoleList, isRightList, sortable, revision]);
 
@@ -231,7 +237,7 @@ export default function ParentChildSelect({
       log("Minimum value cannot be greater than maximum value", "error");
       return;
     }
-    updateMinMax(uuid, min, max);
+    updateMinMax(uuid, childType, min, max);
   }
 
   // Reordering is offered exactly where sorting is not: a list the user can sort

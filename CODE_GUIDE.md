@@ -232,12 +232,26 @@ of this whole codebase:
   in-place edits subscribe to `revision`. This replaces Aurelia's automatic deep
   observation, which React does not have.
 
-- **`selectedObject` is a working copy.** `setSelectedObject` stores a `reref`'d
-  clone, deliberately decoupled from the item in the collection array. So while
-  you type a new name, the card in the left-nav list still shows the old one —
-  the list only catches up when `saveSelectedObject` → `updateLocalObject`
+  **Only the top level gets a new identity.** `so.classes` is the same array
+  before and after `classes.push(...)`, so a `useMemo` keyed on that array (or on
+  anything derived from it that keeps its identity) keeps serving the old value.
+  Adding `revision` to your *own* memo's deps is not enough if what it returns is
+  still the live array and the next memo down is keyed on it. Derive a new array
+  from it instead. That is how adding a class to a scene type once showed nothing
+  until you switched tabs: `ParentChildSelect` handed the live `classes` array to
+  `useObjectTable`.
+
+- **`selectedObject` is a working copy.** `setSelectedObject` stores a
+  `deepClone` of the collection item, decoupled from it all the way down. So
+  while you type a new name, the card in the left-nav list still shows the old
+  one — the list only catches up when `saveSelectedObject` → `updateLocalObject`
   replaces the collection item with the server's response. That is intended
-  behavior, not a bug.
+  behavior, not a bug. It has to be deep: the mutators edit nested lists in place
+  (`classes`, a role's references, `has_table_attribute`), and a shallow copy
+  shared those with the collection item, so an unsaved add landed in it, survived
+  "Discard changes", and reappeared as clean the next time the object was opened.
+  For the same reason `addChild` attaches a copy of the child, not the loaded
+  object.
 
 - **`selectedObject` / `type` / `selectedTab` are a *mirror* of the active open
   tab.** See [open tabs](#open-tabs-the-vs-code-strip) — the store keeps one
@@ -660,7 +674,10 @@ renders through one shared, generic `ParentChildSelect`:
 [ModalObjectSelect.tsx](src/views/common/ModalObjectSelect.tsx)), remove, edit,
 inline min/max editing, UI-component dropdowns, and row reordering — branching its
 columns and behavior on that one type string. It subscribes to `revision` so it
-re-renders after in-place child edits.
+re-renders after in-place child edits, and its `rows` are always a new array: the
+field it reads is the live array the store pushes into, and `useObjectTable`
+memoises on identity. [StructuralTab.test.tsx](src/views/middle-body/structural-tabs/StructuralTab.test.tsx)
+pins that an added child shows at once.
 
 `childType` is a **pseudo-type**: not always a real object type, but a routing
 key into the store's `CHILD_HANDLERS` table, which `addChild`/`removeChild`
@@ -1036,7 +1053,7 @@ container, so the in-container hostname `mmar-server:8000` would not resolve for
 
 ## Tests
 
-`npm run test` → **239 tests across 29 files**, all green. Vitest defaults to the
+`npm run test` → **257 tests across 30 files**, all green. Vitest defaults to the
 `node` environment; the component suites opt into jsdom per-file with a
 `// @vitest-environment jsdom` docblock — cheaper than a global switch, and it keeps
 the blast radius small. [src/test-setup.ts](src/test-setup.ts) imports

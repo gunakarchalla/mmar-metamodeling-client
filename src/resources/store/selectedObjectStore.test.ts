@@ -4,6 +4,7 @@ import { SceneType } from "@gds/models/meta/Metamodel_scenetypes.structure";
 import { Class } from "@gds/models/meta/Metamodel_classes.structure";
 import { AttributeType } from "@gds/models/meta/Metamodel_attributetypes.structure";
 import { Attribute } from "@gds/models/meta/Metamodel_attributes.structure";
+import { Relationclass } from "@gds/models/meta/Metamodel_relationclasses.structure";
 import { useEditorStore } from "./editorStore";
 
 const reset = () => useSelectedObjectStore.getState().resetObjects();
@@ -197,6 +198,86 @@ describe("selectedObjectStore open tabs", () => {
     store().resetObjects();
     expect(store().openTabs).toHaveLength(0);
     expect(store().selectedObject).toBeNull();
+  });
+});
+
+/**
+ * A tab's working copy is decoupled from the loaded collection all the way down, not
+ * just at the top: the mutators edit nested lists in place, and a copy that shared them
+ * with the collection entry carried every unsaved edit into it — where it survived
+ * "Discard changes" and came back, clean, the next time the object was opened.
+ */
+describe("selectedObjectStore keeps unsaved edits in the working copy", () => {
+  const store = () => useSelectedObjectStore.getState();
+  const loaded = <T,>(uuid: string) => store().getObjectFromUuid(uuid) as unknown as T;
+
+  beforeEach(() => {
+    reset();
+    store().setObjects([SceneType.fromJS({ uuid: "st-1", name: "One" }) as SceneType], "SceneType");
+    store().setObjects(
+      [
+        Class.fromJS({ uuid: "cl-1", name: "Owner" }) as Class,
+        Class.fromJS({ uuid: "cl-2", name: "Other" }) as Class,
+      ],
+      "Class",
+    );
+    store().setObjects([Attribute.fromJS({ uuid: "at-1", name: "Value" }) as Attribute], "Attribute");
+  });
+
+  it("does not add an unsaved child to the loaded object, and discarding drops it", () => {
+    store().setSelectedObject("st-1");
+    store().addChild("cl-1", "Class");
+    expect(loaded<SceneType>("st-1").classes).toHaveLength(0);
+
+    store().closeTab("st-1");
+    store().setSelectedObject("st-1");
+    expect((store().selectedObject as SceneType).classes).toHaveLength(0);
+    expect(store().getTab("st-1")?.dirty).toBe(false);
+  });
+
+  it("keeps an edit to an added child's row with that parent", () => {
+    for (const owner of ["cl-1", "cl-2"]) {
+      store().setSelectedObject(owner);
+      store().addChild("at-1", "Attribute");
+    }
+    // Edit the row the way the Attributes tab does: in place, then commit.
+    const row = (store().selectedObject as Class).attributes[0] as Attribute & { ui_component?: string };
+    row.ui_component = "multi-line";
+    store().commitSelected();
+
+    expect((loaded<Attribute>("at-1") as Attribute & { ui_component?: string }).ui_component).toBeUndefined();
+    store().setSelectedObject("cl-1");
+    expect((store().selectedObject as Class).attributes[0]).not.toHaveProperty("ui_component", "multi-line");
+  });
+
+  it("keeps a relation end and its bounds out of the loaded relation class", () => {
+    store().setObjects(
+      [
+        Relationclass.fromJS({
+          uuid: "rc-1",
+          name: "Link",
+          role_from: { uuid: "role-from", name: "from" },
+          role_to: { uuid: "role-to", name: "to" },
+        }) as Relationclass,
+      ],
+      "RelationClass",
+    );
+    store().setSelectedObject("rc-1");
+    store().addChild("cl-1", "Source");
+    store().updateMinMax("cl-1", "Source", 1, 3);
+
+    expect(loaded<Relationclass>("rc-1").role_from.class_references).toHaveLength(0);
+  });
+
+  it("keeps a nested field edit out of the loaded object", () => {
+    store().setObjects(
+      [SceneType.fromJS({ uuid: "st-2", name: "Two", coordinates_2d: { x: 1, y: 2 } }) as SceneType],
+      "SceneType",
+    );
+    store().setSelectedObject("st-2");
+    store().updateSelectedField("coordinates_2d.x", 5);
+
+    expect(loaded<SceneType>("st-2").coordinates_2d.x).toBe(1);
   });
 });
 
@@ -400,5 +481,48 @@ describe("selectedObjectStore table columns", () => {
 
     store().addChild("b", "Column");
     expect(sequences()).toEqual([["a", 1], ["c", 2], ["b", 3]]);
+  });
+});
+
+/**
+ * Each end of a relation class has its own role, and so its own min/max per referenced
+ * object. A relation class may link a class to itself, which puts the same uuid in both
+ * roles: an edit to one end must not land on the other.
+ */
+describe("selectedObjectStore relation class cardinality", () => {
+  const store = () => useSelectedObjectStore.getState();
+  const relationClass = () => store().selectedObject as Relationclass;
+  const bounds = (end: "role_from" | "role_to") =>
+    relationClass()[end].class_references.map((reference) => [reference.uuid, reference.min, reference.max]);
+
+  beforeEach(() => {
+    reset();
+    store().setObjects([new Class("cl-node", "Node", "" as never, null as never)], "Class");
+    store().setObjects(
+      [
+        Relationclass.fromJS({
+          uuid: "rc-link",
+          name: "Link",
+          role_from: { uuid: "role-from", name: "from" },
+          role_to: { uuid: "role-to", name: "to" },
+        }) as Relationclass,
+      ],
+      "RelationClass",
+    );
+    store().setSelectedObject("rc-link");
+    store().addChild("cl-node", "Source");
+    store().addChild("cl-node", "Destination");
+  });
+
+  it("sets the destination's bounds when the class is also the source", () => {
+    store().updateMinMax("cl-node", "Destination", 2, 5);
+    expect(bounds("role_to")).toEqual([["cl-node", 2, 5]]);
+    expect(bounds("role_from")).toEqual([["cl-node", 0, 1]]);
+  });
+
+  it("sets the source's bounds without touching the destination", () => {
+    store().updateMinMax("cl-node", "Source", 1, 3);
+    expect(bounds("role_from")).toEqual([["cl-node", 1, 3]]);
+    expect(bounds("role_to")).toEqual([["cl-node", 0, 1]]);
   });
 });
