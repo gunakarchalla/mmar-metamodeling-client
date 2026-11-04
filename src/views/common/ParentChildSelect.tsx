@@ -23,6 +23,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { ColumnStructure } from "@gds/models/meta/Metamodel_columns.structure";
+import { UI_COMPONENT } from "@gds/models/meta/Metamodel_ui_components";
 import { useSelectedObjectStore } from "@/resources/store/selectedObjectStore";
 import { useLogStore } from "@/resources/store/logStore";
 import { vizRepIconOf } from "@/resources/services/vizrep-icon";
@@ -87,10 +88,14 @@ function MinMaxCell({
  *
  * The choice depends on whether the attribute defines facets — a `|`-separated
  * list of allowed values. With facets the value comes from a fixed set, so only
- * a dropdown or a slider makes sense; without them it is free text, so only a
- * text field, a multi-line text field or a button does. The other options stay
- * visible but disabled. Multi-line is for values with line breaks, such as a
+ * a dropdown or a slider makes sense to EDIT it; without them it is free text, so
+ * only a text field, a multi-line text field or a button does. The other options
+ * stay visible but disabled. Multi-line is for values with line breaks, such as a
  * mechanism's code, which a single-line text field would join into one line.
+ *
+ * Three options fit every attribute, facets or not, because none of them lets the
+ * user pick a value: None hides the attribute from the modelling client, and the two
+ * read-only options show its value greyed out — see Metamodel_ui_components in gds.
  */
 function UiComponentCell({
   row,
@@ -108,19 +113,22 @@ function UiComponentCell({
       onChange={(event) => onChange(event.target.value)}
       sx={{ minWidth: 130 }}
     >
-      <MenuItem value="text" disabled={hasFacets}>
+      <MenuItem value={UI_COMPONENT.NONE}>None</MenuItem>
+      <MenuItem value={UI_COMPONENT.TEXT} disabled={hasFacets}>
         Text
       </MenuItem>
-      <MenuItem value="multi-line" disabled={hasFacets}>
+      <MenuItem value={UI_COMPONENT.TEXT_READ_ONLY}>Text (read only)</MenuItem>
+      <MenuItem value={UI_COMPONENT.MULTI_LINE} disabled={hasFacets}>
         Multi-line
       </MenuItem>
-      <MenuItem value="dropdown" disabled={!hasFacets}>
+      <MenuItem value={UI_COMPONENT.MULTI_LINE_READ_ONLY}>Multi-line (read only)</MenuItem>
+      <MenuItem value={UI_COMPONENT.DROPDOWN} disabled={!hasFacets}>
         Dropdown
       </MenuItem>
-      <MenuItem value="slider" disabled={!hasFacets}>
+      <MenuItem value={UI_COMPONENT.SLIDER} disabled={!hasFacets}>
         Slider
       </MenuItem>
-      <MenuItem value="button" disabled={hasFacets}>
+      <MenuItem value={UI_COMPONENT.BUTTON} disabled={hasFacets}>
         Button
       </MenuItem>
     </Select>

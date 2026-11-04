@@ -69,4 +69,53 @@ describe("ParentChildSelect with attributes", () => {
 
     expect(within(screen.getByRole("listbox")).getByRole("option", { name: "Multi-line" }).getAttribute("aria-disabled")).toBe("true");
   });
+
+  // None and the read-only options let the user pick nothing, so facets do not matter.
+  it.each([
+    ["without facets", ""],
+    ["with facets", "a|b"],
+  ])("offers None and both read-only options for an attribute %s", (_label, facets) => {
+    render(<ParentChildSelect childType="Attribute" items={[attribute(facets ? "dropdown" : "text", facets)]} />);
+
+    fireEvent.mouseDown(screen.getByRole("combobox"));
+    const listbox = within(screen.getByRole("listbox"));
+
+    for (const name of ["None", "Text (read only)", "Multi-line (read only)"]) {
+      expect(listbox.getByRole("option", { name }).getAttribute("aria-disabled")).not.toBe("true");
+    }
+  });
+
+  it.each([
+    ["None", "none"],
+    ["Text (read only)", "text-readonly"],
+    ["Multi-line (read only)", "multi-line-readonly"],
+  ])("writes %s to the attribute as %s", (name, stored) => {
+    const attributes = [attribute("text")];
+    render(<ParentChildSelect childType="Attribute" items={attributes} />);
+
+    fireEvent.mouseDown(screen.getByRole("combobox"));
+    fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name }));
+
+    expect(attributes[0].ui_component).toBe(stored);
+    expect(commitSelected).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows a stored read-only UI component by its label", () => {
+    render(<ParentChildSelect childType="Attribute" items={[attribute("multi-line-readonly")]} />);
+
+    expect(screen.getByRole("combobox").textContent).toContain("Multi-line (read only)");
+  });
+});
+
+describe("ParentChildSelect with table columns and the new UI components", () => {
+  it("writes None to the column, which hides it in the modelling client", () => {
+    const columns = [column("text")];
+    render(<ParentChildSelect childType="Column" items={columns} />);
+
+    fireEvent.mouseDown(screen.getByRole("combobox"));
+    fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name: "None" }));
+
+    expect(columns[0].ui_component).toBe("none");
+    expect(columns[0].attribute.ui_component).toBe("text");
+  });
 });
