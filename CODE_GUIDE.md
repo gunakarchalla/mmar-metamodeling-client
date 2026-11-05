@@ -433,7 +433,7 @@ against the original.
 | [meta-utility.ts](src/resources/services/meta-utility.ts) | VizRep function parsing/eval + file cache warmup |
 | [instance-utility.ts](src/resources/services/instance-utility.ts) | scene-instance / tab-context helpers |
 | [file-utility.ts](src/resources/services/file-utility.ts) | UUID → file-content cache, server-backed |
-| [expression-utility.ts](src/resources/services/expression-utility.ts) | expression evaluation for vizreps |
+| [expression-utility.ts](src/resources/services/expression-utility.ts) | the `gc.expression` API vizReps call; keep its calls in step with the modeling client's copy and with [gc-intellisense.ts](src/views/code-editor/gc-intellisense.ts), so a vizRep previews as it draws |
 | [helper-service.ts](src/resources/services/helper-service.ts) | `dataUrlToFile` / `fileToBase64` |
 | [auth-token.ts](src/resources/services/auth-token.ts) | bearer-token storage + the `Authorization` header |
 | [vizrep-icon.ts](src/resources/services/vizrep-icon.ts) | scrapes a list icon out of a VizRep — see [gotchas](#gotchas) |
@@ -1080,7 +1080,9 @@ container, so the in-container hostname `mmar-server:8000` would not resolve for
 
 ## Tests
 
-`npm run test` → **286 tests across 33 files**, all green. Vitest defaults to the
+`npm run test` → **316 tests across 34 files**, all green (5 November 2026). Under full-suite
+load a jsdom component suite can occasionally pass the 5 s test timeout; rerun it alone
+before suspecting a change. Vitest defaults to the
 `node` environment; the component suites opt into jsdom per-file with a
 `// @vitest-environment jsdom` docblock — cheaper than a global switch, and it keeps
 the blast radius small. [src/test-setup.ts](src/test-setup.ts) imports

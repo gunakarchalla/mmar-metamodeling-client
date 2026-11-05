@@ -196,7 +196,7 @@ export async function runPreview(): Promise<void> {
 
   // --- run the VizRep function compiled above ---
   await graphicContext.resetInstance();
-  await graphicContext.runVizRepFunction(metaFunction);
+  await graphicContext.runVizRepFunction(metaFunction, instance);
 
   // --- draw ---
   let classObject3D;

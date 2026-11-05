@@ -30,6 +30,18 @@ declare type ExpressionUtility = {
   getOutgoingRelationsByInstanceUUID(instanceUUID: string, metaClassUUID?: string | null): Promise<RelationclassInstance[]>;
   /** Checks if any type of instance in the local client has both incoming and outgoing relations (i.e. is connected). */
   isConnected(instanceUUID: string): Promise<boolean>;
+  /** The instance whose vizRep is running (class, relation or port instance). Undefined outside a vizRep. */
+  self(): Promise<any>;
+  /** The value of an attribute of any instance, by the name of its meta attribute. */
+  attrvalByNameAndInst(attrName: string, instUUID: string): Promise<string>;
+  /** The instances at the far ends of the relations ENDING at the given instance (its sources), each once, in relation order. Ports and relations count too. Optionally only relations of the given relation class(es). */
+  getSourcesByInstanceUUID(instanceUUID: string, relationClassUUIDs?: string | string[] | null): Promise<any[]>;
+  /** The instances at the far ends of the relations STARTING at the given instance (its destinations), each once, in relation order. Ports and relations count too. Optionally only relations of the given relation class(es). */
+  getDestinationsByInstanceUUID(instanceUUID: string, relationClassUUIDs?: string | string[] | null): Promise<any[]>;
+  /** The rows of a table attribute of any instance, top to bottom. Each row maps its cells by column name and by column meta attribute UUID: row.Product.value. Empty when there is no such attribute. */
+  getTableRows(instanceUUID: string, tableAttrUUID: string): Promise<Record<string, AttributeInstance>[]>;
+  /** The instance a reference attribute — or a cell of a reference column — points at. Undefined when there is none or it is not in the local client. */
+  getReference(attributeInstance: AttributeInstance): Promise<any>;
   /** Checks if there is a visual update. */
   checkForVisualizationUpdate(): void;
   /** Checks if there is a visual update regarding a specific AttributeInstance. */

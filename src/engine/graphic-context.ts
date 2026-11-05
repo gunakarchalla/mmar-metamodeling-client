@@ -35,6 +35,11 @@ interface custom_object {
   [key: string]: any;
 }
 
+/** A coordinate a vizRep passed, or 0 when it passed none (or something that is not a number). */
+function finiteOr0(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
 export class GraphicContext {
   private globalObjectInstance = globalObject;
   private metaUtility = metaUtility;
@@ -131,6 +136,9 @@ export class GraphicContext {
       const image = new Image();
       // Create texture
       const texture = new THREE.Texture(image);
+      // An image's pixels are sRGB; unmarked, three takes them as linear and brightens
+      // them again on output, which washed every image out.
+      texture.colorSpace = THREE.SRGBColorSpace;
       // On image load, update texture
       image.onload = async () => {
         texture.needsUpdate = true;
@@ -168,6 +176,9 @@ export class GraphicContext {
       const image = new Image();
       // Create texture
       const texture = new THREE.Texture(image);
+      // An image's pixels are sRGB; unmarked, three takes them as linear and brightens
+      // them again on output, which washed every image out.
+      texture.colorSpace = THREE.SRGBColorSpace;
       // On image load, update texture
       image.onload = () => {
         texture.needsUpdate = true;
@@ -209,6 +220,9 @@ export class GraphicContext {
       const image = new Image(); // or document.createElement('img' );
       // Create texture
       const texture = new THREE.Texture(image);
+      // An image's pixels are sRGB; unmarked, three takes them as linear and brightens
+      // them again on output, which washed every image out.
+      texture.colorSpace = THREE.SRGBColorSpace;
       // On image load, update texture
       image.onload = () => {
         texture.needsUpdate = true;
@@ -262,6 +276,9 @@ export class GraphicContext {
       const image = new Image();
       // Create texture
       const texture = new THREE.Texture(image);
+      // An image's pixels are sRGB; unmarked, three takes them as linear and brightens
+      // them again on output, which washed every image out.
+      texture.colorSpace = THREE.SRGBColorSpace;
       // On image load, update texture
       image.onload = () => {
         texture.needsUpdate = true;
@@ -389,6 +406,9 @@ export class GraphicContext {
 
     // Update the rendering:
     textMesh.sync();
+
+    // Where the label goes when no stored variables position it (attachText).
+    textMesh.userData.offset = { x: finiteOr0(x_rel), y: finiteOr0(y_rel), z: finiteOr0(z_rel) };
 
     textMesh.userData.custom_variables = {};
     if (pos_name_x && pos_name_y && pos_name_z) {
@@ -853,10 +873,13 @@ export class GraphicContext {
     const rel_y = keys.find((key) => key.includes("rel") && key.includes("y"));
     const rel_z = keys.find((key) => key.includes("rel") && key.includes("z"));
 
-    //if rel_x, rel_y, rel_z are found, set position to value of rel_x, rel_y, rel_z
-    textObject.position.x = rel_x ? textObject.userData.custom_variables[rel_x].value : 0;
-    textObject.position.y = rel_y ? textObject.userData.custom_variables[rel_y].value : 0;
-    textObject.position.z = rel_z ? textObject.userData.custom_variables[rel_z].value : 0;
+    //if rel_x, rel_y, rel_z are found, set position to value of rel_x, rel_y, rel_z.
+    //otherwise the label goes where its vizRep placed it: graphic_text's x_rel, y_rel and
+    //z_rel, which used to be dropped whenever no variable names came with them.
+    const offset = textObject.userData.offset ?? { x: 0, y: 0, z: 0 };
+    textObject.position.x = rel_x ? textObject.userData.custom_variables[rel_x].value : offset.x;
+    textObject.position.y = rel_y ? textObject.userData.custom_variables[rel_y].value : offset.y;
+    textObject.position.z = rel_z ? textObject.userData.custom_variables[rel_z].value : offset.z;
 
     //else if rotation delivered by vizRep, set rotation
     if (
@@ -1140,11 +1163,26 @@ export class GraphicContext {
 
   /**
    * Runs the vizRep function with the provided vizRep code.
-   * @param vizRepCode The mechanism code to be executed.
+   *
+   * Given the instance being drawn, `gc.expression.self()` answers with it during the
+   * run, as it does in the modeling client.
+   *
+   * @param vizRepCode The vizRep code to be executed.
+   * @param instance The instance being drawn.
    */
-  async runVizRepFunction(vizRepCode: string) {
+  async runVizRepFunction(vizRepCode: string, instance?: ObjectInstance) {
     const vizRepFunction = await this.metaUtility.parseMetaFunction(vizRepCode);
-    await vizRepFunction(this);
+    if (!instance) {
+      await vizRepFunction(this);
+      return;
+    }
+    // The plain API with `self` answered: its methods are inherited, so they run as usual.
+    this.expression = Object.create(expressionUtility, { self: { value: async () => instance } });
+    try {
+      await vizRepFunction(this);
+    } finally {
+      this.expression = expressionUtility;
+    }
   }
 }
 

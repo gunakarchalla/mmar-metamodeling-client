@@ -1,7 +1,9 @@
 import {
   AttributeInstance,
   ClassInstance,
+  ObjectInstance,
   RelationclassInstance,
+  RoleInstance,
   UUID,
 } from "@gds";
 import { globalObject } from "@/engine/global-definition";
@@ -16,6 +18,19 @@ import { fileUtility } from "./file-utility";
  * unchanged (including the `readyForVizRepUpdate` lock + bus publishes that drive
  * the live-preview loop).
  */
+/** What a role instance points at: a class, relation, port, scene or attribute instance. */
+function referenceTarget(role: RoleInstance | null | undefined): UUID | undefined {
+  if (!role) return undefined;
+  return (
+    role.uuid_has_reference_class_instance ??
+    role.uuid_has_reference_relationclass_instance ??
+    role.uuid_has_reference_port_instance ??
+    role.uuid_has_reference_scene_instance ??
+    role.uuid_has_reference_attribute_instance ??
+    undefined
+  );
+}
+
 export class ExpressionUtility {
   private globalObjectInstance = globalObject;
   private instanceUtility = instanceUtility;
@@ -241,6 +256,83 @@ export class ExpressionUtility {
     const incomingRelations = await this.instanceUtility.getIncomingRelationsFromInstance(instanceUUID);
     const outgoingRelations = await this.instanceUtility.getOutgoingRelationsFromInstance(instanceUUID);
     return incomingRelations.length > 0 && outgoingRelations.length > 0;
+  }
+
+  // The helpers below match the modeling client's, so a vizRep previews here as it
+  // draws there.
+
+  /**
+   * The instance whose vizRep is running — in the preview, the instance it shows.
+   * Undefined outside a vizRep. Answered by the context `runVizRepFunction` hands the
+   * vizRep; this is what any other caller gets.
+   */
+  async self(): Promise<ObjectInstance | undefined> {
+    return undefined;
+  }
+
+  /** The value of an attribute of any instance, by the name of its meta attribute. */
+  async attrvalByNameAndInst(attrName: string, instUUID: string): Promise<string | undefined> {
+    const attributeInstance = await this.instanceUtility.getAttributeInstanceFromAnyInstance(attrName, instUUID, "name");
+    return attributeInstance?.value;
+  }
+
+  /**
+   * The instances at the far ends of the relations that END at the given instance (its
+   * sources), each once, in the order of the relations; optionally only relations of the
+   * given relation classes.
+   */
+  async getSourcesByInstanceUUID(instanceUUID: string, relationClassUUIDs: string | string[] | null = null): Promise<ObjectInstance[]> {
+    return this.relatedInstances(instanceUUID, relationClassUUIDs, "to");
+  }
+
+  /**
+   * The instances at the far ends of the relations that START at the given instance (its
+   * destinations), each once, in the order of the relations; optionally only relations of
+   * the given relation classes.
+   */
+  async getDestinationsByInstanceUUID(instanceUUID: string, relationClassUUIDs: string | string[] | null = null): Promise<ObjectInstance[]> {
+    return this.relatedInstances(instanceUUID, relationClassUUIDs, "from");
+  }
+
+  private async relatedInstances(instanceUUID: UUID, relationClassUUIDs: string | string[] | null, end: "from" | "to"): Promise<ObjectInstance[]> {
+    const relationClasses = relationClassUUIDs == null ? null : new Set(([] as string[]).concat(relationClassUUIDs));
+    const related: ObjectInstance[] = [];
+    const seen = new Set<UUID>();
+    for (const relation of await this.instanceUtility.getAllRelationClassInstances()) {
+      if (relationClasses && !relationClasses.has(relation.uuid_relationclass)) continue;
+      const [near, far] = end === "from" ? [relation.role_instance_from, relation.role_instance_to] : [relation.role_instance_to, relation.role_instance_from];
+      if (referenceTarget(near) !== instanceUUID) continue;
+      const farUUID = referenceTarget(far);
+      if (!farUUID || seen.has(farUUID)) continue;
+      const instance = await this.instanceUtility.getAnyInstance(farUUID);
+      if (!instance) continue;
+      seen.add(farUUID);
+      related.push(instance as ObjectInstance);
+    }
+    return related;
+  }
+
+  /**
+   * The rows of a table attribute of any instance, top to bottom; each row maps its cells
+   * under the column's meta attribute name and under its UUID.
+   */
+  async getTableRows(instanceUUID: string, tableAttrUUID: string): Promise<Record<string, AttributeInstance>[]> {
+    const table = await this.instanceUtility.getAttributeInstanceFromAnyInstance(tableAttrUUID, instanceUUID, "uuid");
+    const rows: Record<string, AttributeInstance>[] = [];
+    for (const cell of table?.table_attributes ?? []) {
+      if (!Number.isInteger(cell.table_row) || cell.table_row < 0) continue;
+      while (rows.length <= cell.table_row) rows.push({});
+      if (cell.name) rows[cell.table_row][cell.name] = cell;
+      rows[cell.table_row][cell.uuid_attribute] = cell;
+    }
+    return rows;
+  }
+
+  /** The instance a reference attribute or reference cell points at, if it is in the local client. */
+  async getReference(attributeInstance: AttributeInstance): Promise<ObjectInstance | undefined> {
+    const target = referenceTarget(attributeInstance?.role_instance_from);
+    if (!target) return undefined;
+    return ((await this.instanceUtility.getAnyInstance(target)) ?? undefined) as ObjectInstance | undefined;
   }
 
   /**

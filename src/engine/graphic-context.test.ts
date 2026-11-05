@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from "vitest";
+import * as THREE from "three";
 
 /**
  * glTF scale parity between this client's preview and the modeling client.
@@ -71,5 +72,40 @@ describe("graphic_gltf", () => {
     const [mesh] = await graphicContext.graphic_gltf(makeFlattenedGltf(), 0, 0, 0, [2, 2, 2]);
 
     expect(mesh.scale.toArray().map((v) => Number(v.toFixed(3)))).toEqual([2, 2, 0.2]);
+  });
+});
+
+// Parity with the modeling client's graphic-context: the same vizRep must look the same
+// in the preview as in the model.
+describe("image textures", () => {
+  const PIXEL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==";
+
+  it("marks a texture as sRGB, so images are not washed out", async () => {
+    const plane = await graphicContext.graphic_plane(1, 1, undefined, PIXEL);
+
+    expect((plane.material as THREE.MeshBasicMaterial).map!.colorSpace).toBe(THREE.SRGBColorSpace);
+  });
+});
+
+describe("graphic_text", () => {
+  it("places a label at its offsets when no variable names come with them", async () => {
+    const label = await graphicContext.graphic_text(0.4, -0.2, 0.1, 0.1, "black", "hello");
+
+    await graphicContext.attachText(label as never, new THREE.Object3D());
+
+    expect((label as { position: { toArray(): number[] } }).position.toArray()).toEqual([0.4, -0.2, 0.1]);
+  });
+});
+
+describe("runVizRepFunction", () => {
+  it("answers gc.expression.self() with the instance it is drawing, and only during the run", async () => {
+    const instance = { uuid: "previewed" };
+    await graphicContext.runVizRepFunction(
+      `async function vizRep(gc) { await gc.setVariable('drawn', (await gc.expression.self()).uuid, false); }`,
+      instance as never,
+    );
+
+    expect((graphicContext as unknown as { custom_variables: Record<string, { value: unknown }> }).custom_variables.drawn.value).toBe("previewed");
+    expect(await (graphicContext as unknown as { expression: { self(): Promise<unknown> } }).expression.self()).toBeUndefined();
   });
 });
